@@ -1,0 +1,17 @@
+{
+  "name": "反物质维度攻略",
+  "short_name": "AD攻略",
+  "description": "反物质维度 Android 通关攻略 - 从无限到Cel7的完整中文指南",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f0a1a",
+  "theme_color": "#7c3aed",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}

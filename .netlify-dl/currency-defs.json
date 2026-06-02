@@ -1,0 +1,13 @@
+{
+  "AM": "反物质 (Antimatter) — 游戏最基础货币，通过维度产生，范围 10 ~ 1e308",
+  "IP": "无限点数 (Infinity Points) — 到达1e308AM后大坍缩获得，用于购买无限升级",
+  "EP": "永恒点数 (Eternity Points) — 完成永恒后获得，用于购买永恒升级和时间研究",
+  "TT": "时间定理 (Time Theorems) — 解锁时间研究树的资源",
+  "DT": "膨胀时间 (Dilated Time) — 时间膨胀机制中的特殊资源",
+  "RM": "现实机器 (Reality Machines) — 完成现实后获得，用于购买现实升级",
+  "IM": "虚数机器 (Imaginary Machines) — Cel5+ 天界层阶段专用资源",
+  "RS": "现实碎片 (Reality Shards) — 用于购买佩勒升级 (Perk Upgrades)",
+  "TP": "超光速粒子 (Tachyon Particles) — 时间膨胀阶段资源，用于超光速粒子升级",
+  "TC": "时间研究 (Time Studies) — 使用TT在研究树中解锁的各项研究",
+  "AP": "反物质点数 (Antimatter Points) — 游戏基础点数"
+}

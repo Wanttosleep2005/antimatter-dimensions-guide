@@ -1,0 +1,146 @@
+[
+  {
+    "term": "AM",
+    "fullName": "反物质 (Antimatter)",
+    "description": "游戏中最基础的货币，通过维度产生。范围从10到1e308。",
+    "category": "货币"
+  },
+  {
+    "term": "IP",
+    "fullName": "无限点数 (Infinity Points)",
+    "description": "到达1e308反物质后大坍缩获得。用于购买无限升级。",
+    "category": "货币"
+  },
+  {
+    "term": "EP",
+    "fullName": "永恒点数 (Eternity Points)",
+    "description": "完成永恒后获得。用于购买永恒升级和时间研究。",
+    "category": "货币"
+  },
+  {
+    "term": "TT",
+    "fullName": "时间定理 (Time Theorems)",
+    "description": "通过时间研究获取，用于解锁永恒挑战和时间膨胀。",
+    "category": "货币"
+  },
+  {
+    "term": "DT",
+    "fullName": "膨胀时间 (Dilated Time)",
+    "description": "时间膨胀机制中使用的特殊资源。",
+    "category": "货币"
+  },
+  {
+    "term": "RM",
+    "fullName": "现实机器 (Reality Machines)",
+    "description": "完成现实后获得，用于购买现实升级。",
+    "category": "货币"
+  },
+  {
+    "term": "IM",
+    "fullName": "想象机器 (Imaginary Machines)",
+    "description": "Cel5+阶段使用的特殊资源。",
+    "category": "货币"
+  },
+  {
+    "term": "C1-C12",
+    "fullName": "挑战1-12 (Challenges)",
+    "description": "无限挑战，在特定限制下完成无限，完成后提供永久加成。",
+    "category": "机制"
+  },
+  {
+    "term": "EC1-EC12",
+    "fullName": "永恒挑战 (Eternity Challenges)",
+    "description": "在永恒阶段解锁的挑战，难度更高但奖励丰厚。",
+    "category": "机制"
+  },
+  {
+    "term": "Cel1-Cel7",
+    "fullName": "天界层 (Celestial Levels)",
+    "description": "现实后的终极内容，共7个天界层，每个有不同的机制和挑战。",
+    "category": "机制"
+  },
+  {
+    "term": "维度提升",
+    "fullName": "维度提升 (Dimension Boost)",
+    "description": "消耗维度换取维度间乘数加成。每次提升需要越来越多的维度。",
+    "category": "机制"
+  },
+  {
+    "term": "反物质星系",
+    "fullName": "反物质星系 (Antimatter Galaxy)",
+    "description": "每购买80个第8维度获得1个星系，重置维度但提供全局乘数加成。",
+    "category": "机制"
+  },
+  {
+    "term": "大坍缩",
+    "fullName": "大坍缩 (Big Crunch)",
+    "description": "到达1e308反物质时触发，重置游戏但获得无限点数(IP)。",
+    "category": "机制"
+  },
+  {
+    "term": "维度献祭",
+    "fullName": "维度献祭 (Dimension Sacrifice)",
+    "description": "消耗1-7维提升第8维度的乘数。一般在乘数达到4倍时执行。",
+    "category": "机制"
+  },
+  {
+    "term": "复制器",
+    "fullName": "复制器 (Replicanti)",
+    "description": "突破无限后解锁，随时间自动增长，到达无限时获得复制器星系。",
+    "category": "机制"
+  },
+  {
+    "term": "永恒",
+    "fullName": "永恒 (Eternity)",
+    "description": "完成所有无限内容后解锁的下一阶段，重置无限进度但获得永恒点数。",
+    "category": "机制"
+  },
+  {
+    "term": "时间膨胀",
+    "fullName": "时间膨胀 (Time Dilation)",
+    "description": "降低游戏速度但大幅提升永恒点数获取，用于突破后期瓶颈。",
+    "category": "机制"
+  },
+  {
+    "term": "现实",
+    "fullName": "现实 (Reality)",
+    "description": "重置永恒和无限进度，解锁天界层内容。需要到达一定永恒点数。",
+    "category": "机制"
+  },
+  {
+    "term": "粘滞键",
+    "fullName": "粘滞键 (Sticky Keys)",
+    "description": "长按按钮使其保持按下状态，自动执行操作。安卓版可通过设置开启。",
+    "category": "UI"
+  },
+  {
+    "term": "自动购买器",
+    "fullName": "自动购买器 (Autobuyer)",
+    "description": "自动购买维度、星系等。在打破无限后可升级间隔和数量。",
+    "category": "UI"
+  },
+  {
+    "term": "成就",
+    "fullName": "成就 (Achievements)",
+    "description": "完成特定条件解锁，提供永久加成。格式如r11(第1行第1个)、r42(第4行第2个)。",
+    "category": "机制"
+  },
+  {
+    "term": "TC",
+    "fullName": "时间研究 (Time Studies)",
+    "description": "使用时间定理解锁的研究树，提供各种加成和路线选择。",
+    "category": "机制"
+  },
+  {
+    "term": "无限升级",
+    "fullName": "无限升级 (Infinity Upgrades)",
+    "description": "使用IP购买的升级。格式如11(第1行第1列)，可重复购买的IP翻倍升级。",
+    "category": "升级"
+  },
+  {
+    "term": "打破无限",
+    "fullName": "打破无限 (Break Infinity)",
+    "description": "解锁后可超越1e308AM的限制。需要1e4 IP购买IP翻倍至16x，然后3e4 IP完成C12。",
+    "category": "机制"
+  }
+]
