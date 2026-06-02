@@ -99,6 +99,137 @@ export function Starfield() {
 
       ctx.clearRect(0, 0, w, h);
 
+      // ═══════════════════════════════════════════
+      // SPIRAL GALAXY — majestic background galaxy
+      // ═══════════════════════════════════════════
+      {
+        const gx = w * 0.35;  // galaxy center X — left-center to balance black hole
+        const gy = h * 0.48;  // galaxy center Y
+        const gR = Math.min(w, h) * 0.32; // galaxy radius
+        const breathe = 1 + 0.06 * Math.sin(time * 0.00015);
+
+        // -- Halo: large elliptical outer glow --
+        ctx.save();
+        const haloGrad = ctx.createRadialGradient(gx, gy, gR * 0.15, gx, gy, gR * 1.6);
+        haloGrad.addColorStop(0, 'rgba(60, 20, 140, 0)');
+        haloGrad.addColorStop(0.2, 'rgba(80, 30, 160, 0.035)');
+        haloGrad.addColorStop(0.45, 'rgba(40, 15, 100, 0.05)');
+        haloGrad.addColorStop(0.7, 'rgba(20, 8, 60, 0.025)');
+        haloGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+        ctx.fillStyle = haloGrad;
+        ctx.beginPath();
+        ctx.ellipse(gx, gy, gR * 1.6, gR * 1.05, -0.3, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+
+        // -- Core: bright warm center --
+        const coreGrad = ctx.createRadialGradient(gx, gy, 0, gx, gy, gR * 0.28);
+        coreGrad.addColorStop(0, 'rgba(255, 240, 210, 0.12)');
+        coreGrad.addColorStop(0.08, 'rgba(255, 220, 160, 0.08)');
+        coreGrad.addColorStop(0.25, 'rgba(200, 120, 200, 0.04)');
+        coreGrad.addColorStop(0.5, 'rgba(80, 30, 140, 0.015)');
+        coreGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+        ctx.fillStyle = coreGrad;
+        ctx.beginPath();
+        ctx.ellipse(gx, gy, gR * 0.28, gR * 0.2, -0.3, 0, Math.PI * 2);
+        ctx.fill();
+
+        // -- Spiral arms: 3 arms using logarithmic spiral --
+        const armCount = 3;
+        const armTurns = 1.8;         // how many full turns each arm makes
+        const armSegments = 200;       // smoothness of each arm
+        const armColors = [
+          'rgba(120, 140, 220, ',
+          'rgba(180, 120, 220, ',
+          'rgba(100, 160, 240, ',
+        ];
+
+        for (let a = 0; a < armCount; a++) {
+          const baseAngle = (a / armCount) * Math.PI * 2 + 0.5;
+          const spiralPts: { x: number; y: number }[] = [];
+
+          for (let i = 0; i <= armSegments; i++) {
+            const t = i / armSegments;           // 0 → 1 along the arm
+            const theta = baseAngle + t * armTurns * Math.PI * 2;
+            const r = gR * (0.06 + t * 0.72);    // start from near-core, go outward
+            const x = gx + Math.cos(theta) * r;
+            const y = gy + Math.sin(theta) * r * 0.58; // elliptical flattening
+            spiralPts.push({ x, y });
+          }
+
+          // Draw thick arm with gradient fade
+          ctx.save();
+          ctx.globalAlpha = breathe;
+          for (let i = 1; i < spiralPts.length; i++) {
+            const prog = i / spiralPts.length;
+            const width = gR * 0.04 * (1 - prog * 0.7);  // tapered: thicker near core
+            const alpha = (0.07 * breathe) * (1 - prog * 0.85);
+
+            ctx.beginPath();
+            ctx.moveTo(spiralPts[i - 1].x, spiralPts[i - 1].y);
+            ctx.lineTo(spiralPts[i].x, spiralPts[i].y);
+            ctx.strokeStyle = `${armColors[a]}${alpha})`;
+            ctx.lineWidth = width;
+            ctx.lineCap = 'round';
+            ctx.stroke();
+          }
+
+          // Secondary thinner bright core trace on each arm
+          for (let i = 1; i < spiralPts.length; i++) {
+            const prog = i / spiralPts.length;
+            if (prog > 0.35) break; // only near-core
+            const alpha = 0.04 * (1 - prog / 0.35);
+
+            ctx.beginPath();
+            ctx.moveTo(spiralPts[i - 1].x, spiralPts[i - 1].y);
+            ctx.lineTo(spiralPts[i].x, spiralPts[i].y);
+            ctx.strokeStyle = `rgba(220, 190, 255, ${alpha})`;
+            ctx.lineWidth = gR * 0.015;
+            ctx.lineCap = 'round';
+            ctx.stroke();
+          }
+          ctx.restore();
+        }
+
+        // -- Star cluster particles along spiral arms --
+        for (let p = 0; p < 180; p++) {
+          const armIdx = p % armCount;
+          const baseAngle = (armIdx / armCount) * Math.PI * 2 + 0.5;
+          const t = 0.03 + Math.random() * 0.7;
+          const theta = baseAngle + t * armTurns * Math.PI * 2 + (Math.random() - 0.5) * 0.25;
+          const r = gR * (0.06 + t * 0.72);
+          const px = gx + Math.cos(theta) * r + (Math.random() - 0.5) * gR * 0.08;
+          const py = gy + Math.sin(theta) * r * 0.58 + (Math.random() - 0.5) * gR * 0.04;
+          const pAlpha = (0.02 + Math.random() * 0.05) * breathe;
+          const pSize = 0.4 + Math.random() * 1.4;
+
+          ctx.globalAlpha = pAlpha;
+          ctx.fillStyle = Math.random() > 0.5
+            ? 'rgba(200, 220, 255, 0.9)'
+            : 'rgba(255, 230, 200, 0.8)';
+          ctx.beginPath();
+          ctx.arc(px, py, pSize, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        // -- Core star cluster (dense near center) --
+        for (let p = 0; p < 80; p++) {
+          const angle = Math.random() * Math.PI * 2;
+          const dist = Math.random() * gR * 0.22;
+          const cx = gx + Math.cos(angle) * dist;
+          const cy = gy + Math.sin(angle) * dist * 0.7;
+          const cAlpha = (0.04 + Math.random() * 0.08) * (1 - dist / (gR * 0.22));
+
+          ctx.globalAlpha = cAlpha * breathe;
+          ctx.fillStyle = 'rgba(255, 250, 235, 0.9)';
+          ctx.beginPath();
+          ctx.arc(cx, cy, 0.5 + Math.random() * 1.5, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        ctx.globalAlpha = 1;
+      }
+
       // ---- Premium nebula blobs — multi-layer with color breathing ----
       {
         const breathe = 1 + 0.15 * Math.sin(time * 0.0002);
