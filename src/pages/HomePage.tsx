@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { chapterIndex, loadChapter } from '../data/loadChapter';
 import { cleanTitle } from '../utils/titleClean';
 import { getBookmarks, type Bookmark } from '../utils/bookmarks';
+import { getHideCompleted, setHideCompleted } from '../utils/hideCompleted';
 import type { Chapter } from '../types';
 
 type ScrollTriggerInstance = { kill: () => void };
@@ -130,7 +131,20 @@ export function HomePage({
   useEffect(() => { setBookmarks(getBookmarks()); }, []);
 
   // ── Hide completed toggle ──
-  const [hideCompleted, setHideCompleted] = useState(true);
+  const [hideCompleted, setHideCompletedLocal] = useState(getHideCompleted);
+
+  // Sync with other components
+  useEffect(() => {
+    const handler = () => setHideCompletedLocal(getHideCompleted());
+    window.addEventListener('ad-hide-completed-changed', handler);
+    return () => window.removeEventListener('ad-hide-completed-changed', handler);
+  }, []);
+
+  const toggleHide = () => {
+    const next = !hideCompleted;
+    setHideCompletedLocal(next);
+    setHideCompleted(next);
+  };
 
   // Controls
   const openContinue = () => {
@@ -262,7 +276,7 @@ export function HomePage({
           </div>
           <div className="flex items-center gap-3">
             <label className="flex items-center gap-2 text-xs cursor-pointer select-none" style={{ color: 'var(--text-tertiary)' }}>
-              <input type="checkbox" checked={hideCompleted} onChange={(e) => setHideCompleted(e.target.checked)}
+              <input type="checkbox" checked={hideCompleted} onChange={toggleHide}
                 className="w-3.5 h-3.5 rounded accent-[var(--accent-color)]" />
               隐藏已完成
             </label>
@@ -310,19 +324,19 @@ export function HomePage({
         </div>
       </section>
 
-      {/* ── Guide introduction (bottom) ── */}
-      <section className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16">
-        <div className="console-panel p-6 sm:p-8">
-          <h2 className="text-lg font-bold mb-4 tracking-tight" style={{ fontFamily: 'var(--font-heading)', color: 'var(--text-primary)' }}>攻略说明</h2>
-          <div className="grid sm:grid-cols-2 gap-4 text-sm leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
-            <div>
-              <p className="mb-3">本攻略基于 <strong style={{ color: 'var(--accent-color)' }}>Antimatter Dimensions Android 版</strong>，从最初的无限阶段到最终的天界层，共涵盖 20 个章节。</p>
-              <p className="mb-3">每章提供 <span style={{ color: 'var(--text-primary)' }}>详细的购买顺序、自动购买器配置、挑战策略</span>，并标注关键的符文搭配和研究树路线。</p>
-            </div>
-            <div>
-              <p className="mb-3">侧边栏集成了 <span style={{ color: 'var(--accent-color)' }}>时间研究树复制</span> 和 <span style={{ color: 'var(--accent2-color)' }}>成就检索</span> 功能，按 <kbd className="px-1 py-0.5 rounded text-xs font-semibold" style={{ background: 'var(--accent-light)', color: 'var(--accent-color)', border: '1px solid var(--border-accent)' }}>Ctrl+K</kbd> 可随时搜索全文。</p>
-              <p>每个章节支持 <span style={{ color: 'var(--text-primary)' }}>进度追踪（未开始/进行中/已完成）</span>，阅读进度自动保存到浏览器本地，无需登录。</p>
-            </div>
+      {/* ── Guide introduction ── */}
+      <section className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24 border-t" style={{ borderColor: 'var(--border-color)' }}>
+        <h2 className="text-base font-bold mb-6 text-center" style={{ fontFamily: 'var(--font-heading)', color: 'var(--text-primary)' }}>
+          攻略说明
+        </h2>
+        <div className="grid sm:grid-cols-2 gap-6 text-sm leading-relaxed text-center sm:text-left" style={{ color: 'var(--text-secondary)' }}>
+          <div className="space-y-3">
+            <p>本攻略基于 <strong style={{ color: 'var(--text-primary)' }}>Antimatter Dimensions Android 版</strong>，从最初的无限阶段到最终的天界层，共涵盖 20 个章节。</p>
+            <p>每章提供 <span style={{ color: 'var(--text-primary)' }}>详细的购买顺序、自动购买器配置、挑战策略</span>，并标注关键的符文搭配和研究树路线。</p>
+          </div>
+          <div className="space-y-3">
+            <p>侧边栏集成了 <span style={{ color: 'var(--accent-color)' }}>时间研究树复制</span> 和 <span style={{ color: 'var(--accent2-color)' }}>成就检索</span> 功能，按 <kbd className="px-1 py-0.5 rounded text-xs font-semibold" style={{ background: 'var(--accent-light)', color: 'var(--accent-color)', border: '1px solid var(--border-accent)' }}>Ctrl+K</kbd> 可随时搜索全文。</p>
+            <p>每个章节支持 <span style={{ color: 'var(--text-primary)' }}>进度追踪（未开始/进行中/已完成）</span>，阅读进度自动保存到浏览器本地，无需登录。</p>
           </div>
         </div>
       </section>

@@ -3,6 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { loadChapter } from '../../data/loadChapter';
 import { cleanTitle } from '../../utils/titleClean';
 import { extractStudyTrees, extractAchievements } from '../../data/extractTools';
+import { getHideCompleted, setHideCompleted } from '../../utils/hideCompleted';
 
 type SidebarChapter = {
   id: number;
@@ -89,6 +90,7 @@ function parseSectionTitle(title: string) {
 export function Sidebar({ getStatus }: { getStatus: (id: number) => 'not-started' | 'in-progress' | 'completed' }) {
   const location = useLocation();
   const [collapsed, setCollapsed] = useState(() => window.innerWidth < 1024);
+  const [hideCompleted, setHideCompletedLocal] = useState(getHideCompleted);
   const [expandedPhases, setExpandedPhases] = useState<Set<number>>(ALL_PHASES);
   const [expandedChapters, setExpandedChapters] = useState<Set<number>>(() => new Set());
   const [sectionMap, setSectionMap] = useState<Record<number, SidebarSection[]>>({});
@@ -100,6 +102,19 @@ export function Sidebar({ getStatus }: { getStatus: (id: number) => 'not-started
   useEffect(() => {
     document.documentElement.style.setProperty('--sidebar-width', collapsed ? '4.5rem' : '22.25rem');
   }, [collapsed]);
+
+  // Sync hideCompleted across tabs/components
+  useEffect(() => {
+    const handler = () => setHideCompletedLocal(getHideCompleted());
+    window.addEventListener('ad-hide-completed-changed', handler);
+    return () => window.removeEventListener('ad-hide-completed-changed', handler);
+  }, []);
+
+  const toggleHide = () => {
+    const next = !hideCompleted;
+    setHideCompletedLocal(next);
+    setHideCompleted(next);
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -301,7 +316,9 @@ export function Sidebar({ getStatus }: { getStatus: (id: number) => 'not-started
 
                   {isExpanded && (
                     <div className="guide-sidebar-chapters">
-                      {phase.chapters.map(chapter => {
+                      {phase.chapters
+                        .filter(chapter => !hideCompleted || getStatus(chapter.id) !== 'completed')
+                        .map(chapter => {
                         const status = getStatus(chapter.id);
                         const isActive = chapter.id === currentChapterId;
                         const isMarked = status === 'in-progress' || status === 'completed';
@@ -366,6 +383,25 @@ export function Sidebar({ getStatus }: { getStatus: (id: number) => 'not-started
         {/* Tool panels — study trees & achievements (navigate to full pages) */}
         {!collapsed && (
           <div className="guide-sidebar-tool-panels">
+            {/* Hide completed toggle */}
+            <button
+              type="button"
+              onClick={toggleHide}
+              className="guide-sidebar-tool-opener"
+            >
+              <span className="guide-sidebar-tool-opener-icon">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5">
+                  <path d="M2 4l4 4 4-4M2 10l4 4 4-4" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </span>
+              <span className="guide-sidebar-tool-opener-label">
+                {hideCompleted ? '显示已完成' : '隐藏已完成'}
+              </span>
+              <svg className="guide-sidebar-tool-opener-arrow" width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5">
+                <path d="M2 6h8M6 2l4 4-4 4" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </button>
+
             {/* Study Trees — full page */}
             <Link
               to="/tools/study-trees"
