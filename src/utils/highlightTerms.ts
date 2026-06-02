@@ -246,7 +246,8 @@ export function highlightTerms(text: string, searchQuery?: string): string {
     if (match.includes('<')) return match;
     if (currencyDefs[match]) return match;
     if (/^r\d{2,3}$/.test(match)) {
-      return `<span class="game-term" data-tip="成就 ${match}">${match}</span>`;
+      const achNum = match.slice(1);
+      return `<span class="game-term" data-tip="成就 r${achNum} — Achievement">${match}</span>`;
     }
     const tip = guildTermDefs[match];
     if (tip) {

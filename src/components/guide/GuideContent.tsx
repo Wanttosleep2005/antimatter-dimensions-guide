@@ -2,6 +2,7 @@ import { useEffect, useState, useRef, useCallback } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import type { Chapter } from '../../types';
 import { ReadingProgress } from '../progress/ReadingProgress';
+import { PurchasePanel } from './PurchasePanel';
 import { highlightTerms } from '../../utils/highlightTerms';
 import { injectGlossaryTooltips } from '../../utils/glossaryTooltips';
 import { toggleBookmark, isBookmarked } from '../../utils/bookmarks';
@@ -272,6 +273,9 @@ export function GuideContent({ chapter, chapterId, status, onStatusChange, fontS
           ))}
         </nav>
       )}
+
+      {/* Purchase hints — collapsible panel */}
+      <PurchasePanel chapter={chapter} />
 
       <div className="chapter-reading-layout">
         <div className="guide-content">

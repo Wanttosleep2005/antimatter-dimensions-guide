@@ -18,6 +18,9 @@ export interface AchievementHit {
 }
 
 const STUDY_TREE_RE = /(?:\d{2,3}\s*,\s*){5,}\d{2,3}\s*(?:\|\s*\d{1,2})?/g;
+
+// Context keywords that indicate a real study tree (not purchase orders)
+const TREE_KEYWORDS_RE = /研究树|TT|TS|EC\d+|时间研究|标准树|挂机|活跃/;
 const ACHIEVEMENT_CHAIN_RE = /r(\d{2})((?:\/\d{2})+)/g;
 const ACHIEVEMENT_RE = /\br\d{2,3}\b/g;
 
@@ -58,6 +61,9 @@ export function extractStudyTrees(chapters: Chapter[]) {
 
       const index = match.index ?? 0;
       const context = excerpt(chapter.content, index, raw.length);
+
+      // Skip matches that look like purchase orders, not study trees
+      if (!TREE_KEYWORDS_RE.test(context)) continue;
       hits.push({
         id: key,
         chapterId: chapter.id,

@@ -1915,6 +1915,53 @@ body::before {
 .game-term {
   white-space: nowrap;
   vertical-align: middle;
+  font-weight: 600;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.92em;
+  padding: 0 2px;
+  border-radius: 3px;
+}
+
+/* Achievement reference: r123 */
+.game-term[data-tip^="成就"] {
+  color: #f59e0b;
+  background: rgba(245, 158, 11, 0.12);
+  border-bottom: 1.5px solid rgba(245, 158, 11, 0.4);
+}
+
+/* Challenge reference: EC1, IC1, C1 */
+.game-term[data-tip*="挑战"] {
+  color: #f43f5e;
+  background: rgba(244, 63, 94, 0.1);
+  border-bottom: 1.5px solid rgba(244, 63, 94, 0.3);
+}
+
+/* Celestial reference */
+.game-term[data-tip*="天界"] {
+  color: #3b82f6;
+  background: rgba(59, 130, 246, 0.1);
+  border-bottom: 1.5px solid rgba(59, 130, 246, 0.3);
+}
+
+/* Dimension reference: ID1, TD1 */
+.game-term[data-tip*="维度"] {
+  color: #8b5cf6;
+  background: rgba(139, 92, 246, 0.1);
+  border-bottom: 1.5px solid rgba(139, 92, 246, 0.3);
+}
+
+/* Research reference: TS181 */
+.game-term[data-tip*="研究"] {
+  color: #818cf8;
+  background: rgba(129, 140, 248, 0.1);
+  border-bottom: 1.5px solid rgba(129, 140, 248, 0.3);
+}
+
+/* Upgrade reference: RU11, DU1, IU1, PU1, EU1 */
+.game-term[data-tip*="升级"] {
+  color: #22c55e;
+  background: rgba(34, 197, 94, 0.1);
+  border-bottom: 1.5px solid rgba(34, 197, 94, 0.3);
 }
 
 /* Game term tooltip */

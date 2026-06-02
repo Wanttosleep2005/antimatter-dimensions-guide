@@ -43,10 +43,16 @@ export function AchievementsPage() {
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return achievements.filter(hit => {
-      if (!q) return true;
-      return `${hit.achievement} ${hit.context} ${hit.chapterTitle}`.toLowerCase().includes(q);
-    });
+    return achievements
+      .filter(hit => {
+        if (!q) return true;
+        return `${hit.achievement} ${hit.context} ${hit.chapterTitle}`.toLowerCase().includes(q);
+      })
+      .sort((a, b) => {
+        const nA = parseInt(a.achievement.replace('r', ''));
+        const nB = parseInt(b.achievement.replace('r', ''));
+        return nA - nB;
+      });
   }, [query, achievements]);
 
   return (
