@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, useLocation, useNavigate } from 'react-router-dom';
 import { Layout } from './components/layout/Layout';
 import { SearchModal } from './components/search/SearchModal';
@@ -6,11 +6,39 @@ import { SplashPage } from './pages/SplashPage';
 import { HomePage } from './pages/HomePage';
 import { ChapterPage } from './pages/ChapterPage';
 import { GlossaryPage } from './pages/GlossaryPage';
-import { StudyTreesPage } from './pages/StudyTreesPage';
-import { AchievementsPage } from './pages/AchievementsPage';
 import { useProgress } from './hooks/useProgress';
 import { usePerformanceMonitor } from './hooks/usePerformanceMonitor';
 import { chapterIndex } from './data/loadChapter';
+
+// Lazy-load heavy pages — code splitting for performance
+const StudyTreesPage = lazy(() => import('./pages/StudyTreesPage').then(m => ({ default: m.StudyTreesPage })));
+const AchievementsPage = lazy(() => import('./pages/AchievementsPage').then(m => ({ default: m.AchievementsPage })));
+const AutomatorPage = lazy(() => import('./pages/AutomatorPage').then(m => ({ default: m.AutomatorPage })));
+
+function PageSkeleton() {
+  return <div className="max-w-5xl mx-auto px-4 py-20"><div className="skeleton h-96 rounded-lg" /></div>;
+}
+
+// Cache cleanup on app start
+function cleanCache() {
+  try {
+    const preserve = [
+      'ad-guide-progress', 'ad-bookmarks', 'ad-hide-completed',
+      'ad-recent-chapters', 'ad-search-history', 'ad-guide-fontsize',
+      'ad-guide-last-chapter', 'ad-perf-mode', 'ad-scroll-pos-',
+      'ad-reading-days', 'ad-guide-checklist',
+    ];
+    let cleaned = 0;
+    for (let i = localStorage.length - 1; i >= 0; i--) {
+      const key = localStorage.key(i);
+      if (key && !preserve.some((p) => key.startsWith(p))) {
+        localStorage.removeItem(key);
+        cleaned++;
+      }
+    }
+    if (cleaned > 0) console.log(`[Perf] Cleaned ${cleaned} stale cache entries`);
+  } catch { /* ignore */ }
+}
 
 function AppRoutes() {
   const [searchOpen, setSearchOpen] = useState(false);
@@ -25,6 +53,9 @@ function AppRoutes() {
   const perfMode = usePerformanceMonitor();
   const navigate = useNavigate();
   const location = useLocation();
+
+  // Cache cleanup on app mount
+  useEffect(() => { cleanCache(); }, []);
 
   // Keyboard navigation
   useEffect(() => {
@@ -123,8 +154,9 @@ function AppRoutes() {
             element={<ChapterPage onStatusChange={setChapterStatus} getStatus={getStatus} fontSize={fontSize} onFontSizeChange={setFontSize} />}
           />
           <Route path="/glossary" element={<GlossaryPage />} />
-          <Route path="/tools/study-trees" element={<StudyTreesPage />} />
-          <Route path="/tools/achievements" element={<AchievementsPage />} />
+          <Route path="/tools/study-trees" element={<Suspense fallback={<PageSkeleton />}><StudyTreesPage /></Suspense>} />
+          <Route path="/tools/achievements" element={<Suspense fallback={<PageSkeleton />}><AchievementsPage /></Suspense>} />
+          <Route path="/tools/automator" element={<Suspense fallback={<PageSkeleton />}><AutomatorPage /></Suspense>} />
         </Routes>
       </Layout>
       <SearchModal isOpen={searchOpen} onClose={() => setSearchOpen(false)} />

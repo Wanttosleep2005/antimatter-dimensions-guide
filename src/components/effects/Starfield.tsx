@@ -1,4 +1,4 @@
-import { useRef, useEffect, useCallback } from 'react';
+import { useRef, useEffect, useCallback, memo } from 'react';
 
 interface Star {
   x: number;
@@ -1366,3 +1366,5 @@ export function Starfield({ perfMode }: { perfMode?: 'low' | 'normal' }) {
     />
   );
 }
+
+export const MemoStarfield = memo(Starfield);

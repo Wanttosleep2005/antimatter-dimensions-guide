@@ -186,7 +186,6 @@ function getGameTermTip(term: string): string | null {
   if (/^DU\d+$/.test(term)) return `膨胀升级 ${term} — Dilation Upgrade`;
   if (/^IU\d+$/.test(term)) return `虚幻升级 ${term} — Imaginary Upgrade`;
   if (/^PU\d+$/.test(term)) return `佩勒升级 ${term} — Pelle Upgrade`;
-  // EU and DU number patterns handled by guildTermDefs (复兴树节点)
   if (/^TS\d+$/.test(term)) return `时间研究 ${term} — Time Study`;
   if (/^TD\d+$/.test(term)) return `时间维度 ${term} — Time Dimension`;
   if (/^ID\d+$/.test(term)) return `无限维度 ${term} — Infinity Dimension`;
@@ -209,7 +208,7 @@ function getGameTermTip(term: string): string | null {
  * 6. Guild term highlighting
  * 7. URLs → links
  */
-export function highlightTerms(text: string, searchQuery?: string): string {
+export function highlightTerms(text: string, searchQuery?: string, achievementHighlight?: string): string {
   let s = text;
 
   // Step 0: Normalize achievement format r1122 -> r11 r22
@@ -217,6 +216,18 @@ export function highlightTerms(text: string, searchQuery?: string): string {
     const parts = suffixes.split('/').filter(Boolean);
     return 'r' + base + ' ' + parts.map((p: string) => 'r' + p).join(' ');
   });
+
+  // Step 0.5: Achievement highlight (before search highlight, separate color)
+  if (achievementHighlight && achievementHighlight.trim()) {
+    const escaped = escapeRegex(achievementHighlight.trim());
+    const re = new RegExp(`(${escaped})`, 'gi');
+    let count = 0;
+    s = s.replace(re, (match) => {
+      const cls = count === 0 ? 'achievement-query-highlight achievement-query-highlight-first' : 'achievement-query-highlight';
+      count++;
+      return `<mark class="${cls}">${match}</mark>`;
+    });
+  }
 
   // Step 1: Search query highlighting (before other processing)
   if (searchQuery && searchQuery.trim()) {

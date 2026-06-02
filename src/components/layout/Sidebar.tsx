@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { loadChapter } from '../../data/loadChapter';
 import { cleanTitle } from '../../utils/titleClean';
-import { extractStudyTrees, extractAchievements } from '../../data/extractTools';
+import { extractStudyTrees, extractAchievements, extractAutomatorScripts } from '../../data/extractTools';
 import { getHideCompleted, setHideCompleted } from '../../utils/hideCompleted';
 
 type SidebarChapter = {
@@ -96,6 +96,7 @@ export function Sidebar({ getStatus }: { getStatus: (id: number) => 'not-started
   const [sectionMap, setSectionMap] = useState<Record<number, SidebarSection[]>>({});
   const [studyTreeCount, setStudyTreeCount] = useState(0);
   const [achievementCount, setAchievementCount] = useState(0);
+  const [automatorCount, setAutomatorCount] = useState(0);
   const currentChapterId = Number(location.pathname.match(/\/chapter\/(\d+)/)?.[1] || 0);
   const activeSectionId = location.hash.slice(1);
 
@@ -142,6 +143,8 @@ export function Sidebar({ getStatus }: { getStatus: (id: number) => 'not-started
       const achievements = extractAchievements(validChapters);
       setStudyTreeCount(trees.length);
       setAchievementCount(achievements.length);
+      const automator = extractAutomatorScripts(validChapters);
+      setAutomatorCount(automator.length);
     });
 
     return () => { cancelled = true; };
@@ -431,6 +434,23 @@ export function Sidebar({ getStatus }: { getStatus: (id: number) => 'not-started
               </span>
               <span className="guide-sidebar-tool-opener-label">成就检索</span>
               <span className="guide-sidebar-tool-opener-count">{achievementCount}</span>
+              <svg className="guide-sidebar-tool-opener-arrow" width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5">
+                <path d="M2 6h8M6 2l4 4-4 4" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </Link>
+
+            {/* Automator */}
+            <Link
+              to="/tools/automator"
+              className="guide-sidebar-tool-opener"
+            >
+              <span className="guide-sidebar-tool-opener-icon">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5">
+                  <path d="M5 3l4 4-4 4M2 1v12M12 1v12" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </span>
+              <span className="guide-sidebar-tool-opener-label">自动机脚本</span>
+              <span className="guide-sidebar-tool-opener-count">{automatorCount}</span>
               <svg className="guide-sidebar-tool-opener-arrow" width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5">
                 <path d="M2 6h8M6 2l4 4-4 4" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>

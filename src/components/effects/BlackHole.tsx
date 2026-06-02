@@ -1,4 +1,4 @@
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, memo } from 'react';
 
 interface Particle {
   x: number;
@@ -43,7 +43,7 @@ interface DebrisParticle {
   hue: number;
 }
 
-export function BlackHole() {
+const _BlackHole = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -804,4 +804,6 @@ export function BlackHole() {
       }}
     />
   );
-}
+};
+
+export const BlackHole = memo(_BlackHole);

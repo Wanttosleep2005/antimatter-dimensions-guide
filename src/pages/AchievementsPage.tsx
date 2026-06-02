@@ -127,7 +127,7 @@ export function AchievementsPage() {
               {filtered.map(hit => (
                 <button
                   key={hit.id}
-                  onClick={() => navigate(`/chapter/${hit.chapterId}?q=${encodeURIComponent(hit.achievement)}`)}
+                  onClick={() => navigate(`/chapter/${hit.chapterId}?a=${encodeURIComponent(hit.achievement)}`)}
                   className="w-full flex items-center gap-4 px-5 py-4 border-b border-[var(--border-color)] last:border-b-0 text-left hover:bg-[var(--bg-tertiary)] transition-colors group"
                 >
                   <span

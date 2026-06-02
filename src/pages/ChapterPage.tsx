@@ -59,6 +59,7 @@ export function ChapterPage({ onStatusChange, getStatus, fontSize, onFontSizeCha
 
   const status = getStatus(chapterId);
   const searchQuery = searchParams.get('q') || undefined;
+  const achievementQuery = searchParams.get('a') || undefined;
 
   if (loading) {
     return (
