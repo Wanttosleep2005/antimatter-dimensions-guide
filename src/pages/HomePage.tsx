@@ -179,6 +179,48 @@ export function HomePage({ completed, total, inProgress }: { completed: number; 
         </div>
       </section>
 
+      {/* Guide introduction — console-style info panel */}
+      <section className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16">
+        <div className="relative p-6 sm:p-8 rounded-lg border overflow-hidden"
+          style={{
+            background: 'linear-gradient(180deg, rgba(10,10,22,0.8), rgba(6,6,14,0.7))',
+            borderColor: 'var(--border-color)',
+            boxShadow: '0 4px 24px rgba(0,0,0,0.3), 0 0 0 1px rgba(124,92,240,0.04), inset 0 1px 0 rgba(255,255,255,0.01)',
+          }}
+        >
+          {/* Top accent line — console-style */}
+          <div className="absolute top-0 left-6 right-6 h-px"
+            style={{ background: 'linear-gradient(90deg, transparent, rgba(124,92,240,0.3) 30%, rgba(124,92,240,0.5) 50%, rgba(124,92,240,0.3) 70%, transparent)' }}
+          />
+          <h2 className="text-lg font-bold mb-4 tracking-tight" style={{ fontFamily: 'var(--font-heading)', color: 'var(--text-primary)' }}>
+            攻略说明
+          </h2>
+          <div className="grid sm:grid-cols-2 gap-4 text-sm leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
+            <div>
+              <p className="mb-3">
+                本攻略基于 <strong style={{ color: 'var(--accent-color)' }}>Antimatter Dimensions Android 版</strong>，
+                从最初的无限阶段到最终的天界层（Celestial），共涵盖 20 个章节。
+              </p>
+              <p className="mb-3">
+                每章提供 <span style={{ color: 'var(--text-primary)' }}>详细的购买顺序、自动购买器配置、挑战策略</span>，
+                并标注关键的符文搭配和研究树路线。
+              </p>
+            </div>
+            <div>
+              <p className="mb-3">
+                侧边栏集成了 <span style={{ color: 'var(--accent-color)' }}>时间研究树复制</span> 和
+                <span style={{ color: 'var(--accent2-color)' }}> 成就检索</span> 功能，
+                按 <kbd className="px-1 py-0.5 rounded text-xs font-semibold" style={{ background: 'var(--accent-light)', color: 'var(--accent-color)', border: '1px solid var(--border-accent)' }}>Ctrl+K</kbd> 可随时搜索全文。
+              </p>
+              <p>
+                每个章节支持 <span style={{ color: 'var(--text-primary)' }}>进度追踪（未开始/进行中/已完成）</span>，
+                阅读进度自动保存到浏览器本地，无需登录。
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-20 md:py-28 tool-reveal">
         <div className="flex items-end justify-between gap-6 mb-8">
           <div>

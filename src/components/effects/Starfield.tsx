@@ -9,6 +9,12 @@ interface Star {
   twinklePhase: number;
   layer: number;
   hue: number;
+  vx: number;
+  vy: number;
+  captured: boolean;
+  fallAngle: number;
+  fallSpeed: number;
+  fallR: number;
 }
 
 interface FGStar { x: number; y: number; r: number; opacity: number; hue: number; }
@@ -45,9 +51,15 @@ export function Starfield() {
   const rafRef = useRef<number>(0);
   const lastShootingStarRef = useRef(0);
   const mouseRef = useRef({ x: 0.5, y: 0.5 });
-  // Offscreen galaxy texture — rendered once, rotated per frame
+  // Offscreen Carina Nebula texture
   const galaxyTexRef = useRef<HTMLCanvasElement | null>(null);
   const galaxyDims = useRef({ gx: 0, gy: 0, gR: 0 });
+  // Second offscreen nebula — deep purple cosmic cloud
+  const nebula2TexRef = useRef<HTMLCanvasElement | null>(null);
+  const nebula2Dims = useRef({ gx: 0, gy: 0, gR: 0 });
+  // Third offscreen nebula — electric blue cosmic cloud
+  const nebula3TexRef = useRef<HTMLCanvasElement | null>(null);
+  const nebula3Dims = useRef({ gx: 0, gy: 0, gR: 0 });
   const fgStarsRef = useRef<FGStar[]>([]);
 
   const initFGStars = useCallback((w: number, h: number) => {
@@ -78,15 +90,31 @@ export function Starfield() {
     const stars: Star[] = [];
     STAR_COUNTS.forEach((count, layer) => {
       for (let i = 0; i < count; i++) {
+        const sx = Math.random() * w;
+        const sy = Math.random() * h;
+        // Black hole position (same as BlackHole.tsx: 78%, 35%)
+        const bhx = w * 0.78;
+        const bhy = h * 0.35;
+        const bhR = Math.min(w, h) * 0.22;
+        const dx = sx - bhx;
+        const dy = sy - bhy;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+
         stars.push({
-          x: Math.random() * w,
-          y: Math.random() * h,
+          x: sx,
+          y: sy,
           r: layer === 0 ? 0.3 + Math.random() * 0.7 : layer === 1 ? 0.6 + Math.random() * 1.2 : 0.9 + Math.random() * 1.6,
           opacity: 0.2 + Math.random() * 0.8,
           twinkleSpeed: 0.003 + Math.random() * 0.025,
           twinklePhase: Math.random() * Math.PI * 2,
           layer,
-          hue: 200 + Math.random() * 150, // 200-350: full blue-violet-warm spectrum
+          hue: 200 + Math.random() * 150,
+          vx: 0,
+          vy: 0,
+          captured: dist < bhR * 2.5,
+          fallAngle: Math.atan2(dy, dx),
+          fallSpeed: dist < bhR * 1.5 ? 0.3 + Math.random() * 0.6 : 0,
+          fallR: dist,
         });
       }
     });
@@ -318,6 +346,240 @@ export function Starfield() {
     };
     buildNebulaTexture();
 
+    /** Build a second deep-space nebula — rich purple + cyan cosmic cloud */
+    const buildNebula2Texture = () => {
+      const gx = w * 0.58;
+      const gy = h * 0.22;
+      const gR = Math.min(w, h) * 0.24;
+      nebula2Dims.current = { gx, gy, gR };
+
+      const size = Math.ceil(gR * 2.8);
+      const off = document.createElement('canvas');
+      off.width = size;
+      off.height = size;
+      const o = off.getContext('2d')!;
+      const cx = size / 2;
+      const cy = size / 2;
+
+      // Outer halo
+      const outerGlow = o.createRadialGradient(cx, cy, gR * 0.2, cx, cy, gR * 1.3);
+      outerGlow.addColorStop(0, 'rgba(40, 20, 120, 0.02)');
+      outerGlow.addColorStop(0.3, 'rgba(80, 40, 180, 0.06)');
+      outerGlow.addColorStop(0.6, 'rgba(30, 15, 90, 0.04)');
+      outerGlow.addColorStop(1, 'rgba(0,0,0,0)');
+      o.fillStyle = outerGlow;
+      o.arc(cx, cy, gR * 1.3, 0, Math.PI * 2);
+      o.fill();
+
+      // Purple gas blobs
+      const purpleBlobs = [
+        { x: -0.1, y: -0.05, r: 0.6, a: 0.07 },
+        { x: 0.15, y: -0.1, r: 0.5, a: 0.055 },
+        { x: -0.2, y: 0.15, r: 0.45, a: 0.045 },
+        { x: 0.1, y: 0.12, r: 0.4, a: 0.04 },
+        { x: -0.05, y: 0.25, r: 0.35, a: 0.03 },
+        { x: 0.25, y: -0.15, r: 0.38, a: 0.035 },
+        { x: -0.25, y: -0.2, r: 0.32, a: 0.028 },
+      ];
+      for (const gb of purpleBlobs) {
+        const bx = cx + gb.x * gR;
+        const by = cy + gb.y * gR;
+        const br = gb.r * gR;
+        const grad = o.createRadialGradient(bx, by, 0, bx, by, br);
+        grad.addColorStop(0, `rgba(140, 60, 240, ${gb.a})`);
+        grad.addColorStop(0.3, `rgba(120, 50, 200, ${gb.a * 0.7})`);
+        grad.addColorStop(0.6, `rgba(80, 30, 150, ${gb.a * 0.3})`);
+        grad.addColorStop(1, 'rgba(0,0,0,0)');
+        o.fillStyle = grad;
+        o.beginPath(); o.arc(bx, by, br, 0, Math.PI * 2); o.fill();
+      }
+
+      // Cyan accent blobs
+      const cyanBlobs = [
+        { x: 0.2, y: -0.2, r: 0.25, a: 0.025 },
+        { x: -0.3, y: -0.05, r: 0.22, a: 0.02 },
+        { x: 0.15, y: 0.2, r: 0.2, a: 0.018 },
+      ];
+      for (const cb of cyanBlobs) {
+        const bx = cx + cb.x * gR;
+        const by = cy + cb.y * gR;
+        const br = cb.r * gR;
+        const bGrad = o.createRadialGradient(bx, by, 0, bx, by, br);
+        bGrad.addColorStop(0, `rgba(100, 200, 250, ${cb.a * 1.2})`);
+        bGrad.addColorStop(0.4, `rgba(80, 170, 230, ${cb.a * 0.7})`);
+        bGrad.addColorStop(1, 'rgba(0,0,0,0)');
+        o.fillStyle = bGrad;
+        o.beginPath(); o.arc(bx, by, br, 0, Math.PI * 2); o.fill();
+      }
+
+      // Bright central star
+      const centerGrad = o.createRadialGradient(cx, cy - gR * 0.03, 0, cx, cy - gR * 0.03, gR * 0.1);
+      centerGrad.addColorStop(0, 'rgba(220, 200, 255, 0.35)');
+      centerGrad.addColorStop(0.1, 'rgba(180, 150, 240, 0.15)');
+      centerGrad.addColorStop(0.4, 'rgba(100, 60, 180, 0.04)');
+      centerGrad.addColorStop(1, 'rgba(0,0,0,0)');
+      o.fillStyle = centerGrad;
+      o.beginPath(); o.arc(cx, cy - gR * 0.03, gR * 0.1, 0, Math.PI * 2); o.fill();
+
+      // Diffraction spikes
+      o.save();
+      o.translate(cx, cy - gR * 0.03);
+      o.globalAlpha = 0.1;
+      for (let s = 0; s < 4; s++) {
+        const sa = (s / 4) * Math.PI * 2 + 0.3;
+        const sLen = gR * 0.07;
+        const sg = o.createLinearGradient(0, 0, Math.cos(sa) * sLen, Math.sin(sa) * sLen);
+        sg.addColorStop(0, 'rgba(255, 240, 255, 0.5)');
+        sg.addColorStop(1, 'rgba(0,0,0,0)');
+        o.fillStyle = sg;
+        o.beginPath();
+        o.moveTo(Math.cos(sa - 0.06) * gR * 0.005, Math.sin(sa - 0.06) * gR * 0.005);
+        o.lineTo(Math.cos(sa) * sLen, Math.sin(sa) * sLen);
+        o.lineTo(Math.cos(sa + 0.06) * gR * 0.005, Math.sin(sa + 0.06) * gR * 0.005);
+        o.fill();
+      }
+      o.restore();
+
+      // Wisps
+      for (let w = 0; w < 35; w++) {
+        const angle = Math.random() * Math.PI * 2;
+        const dist = gR * (0.05 + Math.random() * 0.6);
+        const wx = cx + Math.cos(angle) * dist;
+        const wy = cy + Math.sin(angle) * dist;
+        const wLen = gR * (0.03 + Math.random() * 0.1);
+        o.save();
+        o.translate(wx, wy);
+        o.rotate(angle + (Math.random() - 0.5) * 1);
+        const wGrad = o.createLinearGradient(0, 0, wLen, 0);
+        const wAlpha = 0.005 + Math.random() * 0.015;
+        wGrad.addColorStop(0, `rgba(200, 160, 240, ${wAlpha})`);
+        wGrad.addColorStop(1, 'rgba(0,0,0,0)');
+        o.fillStyle = wGrad;
+        o.fillRect(0, -0.6, wLen, 1.2);
+        o.restore();
+      }
+
+      o.globalAlpha = 1;
+      nebula2TexRef.current = off;
+    };
+    buildNebula2Texture();
+
+    /** Build third nebula — electric blue cosmic cloud */
+    const buildNebula3Texture = () => {
+      const gx = w * 0.15;
+      const gy = h * 0.68;
+      const gR = Math.min(w, h) * 0.20;
+      nebula3Dims.current = { gx, gy, gR };
+
+      const size = Math.ceil(gR * 2.6);
+      const off = document.createElement('canvas');
+      off.width = size;
+      off.height = size;
+      const o = off.getContext('2d')!;
+      const cx = size / 2;
+      const cy = size / 2;
+
+      // Outer halo
+      const outer = o.createRadialGradient(cx, cy, gR * 0.15, cx, cy, gR * 1.2);
+      outer.addColorStop(0, 'rgba(20, 60, 180, 0.03)');
+      outer.addColorStop(0.3, 'rgba(40, 100, 200, 0.07)');
+      outer.addColorStop(0.6, 'rgba(15, 50, 140, 0.04)');
+      outer.addColorStop(1, 'rgba(0,0,0,0)');
+      o.fillStyle = outer;
+      o.arc(cx, cy, gR * 1.2, 0, Math.PI * 2);
+      o.fill();
+
+      // Blue emission blobs
+      const blueBlobs = [
+        { x: -0.08, y: -0.05, r: 0.55, a: 0.06 },
+        { x: 0.12, y: -0.1, r: 0.48, a: 0.05 },
+        { x: -0.15, y: 0.12, r: 0.42, a: 0.04 },
+        { x: 0.08, y: 0.15, r: 0.38, a: 0.035 },
+        { x: -0.02, y: 0.22, r: 0.32, a: 0.028 },
+        { x: 0.2, y: -0.15, r: 0.35, a: 0.03 },
+      ];
+      for (const gb of blueBlobs) {
+        const bx = cx + gb.x * gR;
+        const by = cy + gb.y * gR;
+        const br = gb.r * gR;
+        const grad = o.createRadialGradient(bx, by, 0, bx, by, br);
+        grad.addColorStop(0, `rgba(60, 140, 255, ${gb.a})`);
+        grad.addColorStop(0.3, `rgba(40, 120, 230, ${gb.a * 0.7})`);
+        grad.addColorStop(0.6, `rgba(25, 80, 200, ${gb.a * 0.3})`);
+        grad.addColorStop(1, 'rgba(0,0,0,0)');
+        o.fillStyle = grad;
+        o.beginPath(); o.arc(bx, by, br, 0, Math.PI * 2); o.fill();
+      }
+
+      // White-blue reflection spots
+      const whiteBlobs = [
+        { x: -0.1, y: -0.15, r: 0.2, a: 0.025 },
+        { x: 0.15, y: 0.05, r: 0.18, a: 0.02 },
+      ];
+      for (const wb of whiteBlobs) {
+        const bx = cx + wb.x * gR;
+        const by = cy + wb.y * gR;
+        const br = wb.r * gR;
+        const wGrad = o.createRadialGradient(bx, by, 0, bx, by, br);
+        wGrad.addColorStop(0, `rgba(180, 210, 255, ${wb.a * 1.3})`);
+        wGrad.addColorStop(0.4, `rgba(150, 190, 240, ${wb.a * 0.7})`);
+        wGrad.addColorStop(1, 'rgba(0,0,0,0)');
+        o.fillStyle = wGrad;
+        o.beginPath(); o.arc(bx, by, br, 0, Math.PI * 2); o.fill();
+      }
+
+      // Bright center star
+      const centerGrad = o.createRadialGradient(cx, cy - gR * 0.02, 0, cx, cy - gR * 0.02, gR * 0.08);
+      centerGrad.addColorStop(0, 'rgba(230, 240, 255, 0.35)');
+      centerGrad.addColorStop(0.15, 'rgba(180, 210, 250, 0.15)');
+      centerGrad.addColorStop(0.45, 'rgba(80, 140, 220, 0.04)');
+      centerGrad.addColorStop(1, 'rgba(0,0,0,0)');
+      o.fillStyle = centerGrad;
+      o.beginPath(); o.arc(cx, cy - gR * 0.02, gR * 0.08, 0, Math.PI * 2); o.fill();
+
+      // Diffraction
+      o.save();
+      o.translate(cx, cy - gR * 0.02);
+      o.globalAlpha = 0.08;
+      for (let s = 0; s < 4; s++) {
+        const sa = (s / 4) * Math.PI * 2 + 0.5;
+        const sLen = gR * 0.06;
+        const sg = o.createLinearGradient(0, 0, Math.cos(sa) * sLen, Math.sin(sa) * sLen);
+        sg.addColorStop(0, 'rgba(255, 255, 255, 0.5)');
+        sg.addColorStop(1, 'rgba(0,0,0,0)');
+        o.fillStyle = sg;
+        o.beginPath();
+        o.moveTo(Math.cos(sa - 0.05) * gR * 0.004, Math.sin(sa - 0.05) * gR * 0.004);
+        o.lineTo(Math.cos(sa) * sLen, Math.sin(sa) * sLen);
+        o.lineTo(Math.cos(sa + 0.05) * gR * 0.004, Math.sin(sa + 0.05) * gR * 0.004);
+        o.fill();
+      }
+      o.restore();
+
+      // Wisps
+      for (let w = 0; w < 30; w++) {
+        const angle = Math.random() * Math.PI * 2;
+        const dist = gR * (0.05 + Math.random() * 0.55);
+        const wx = cx + Math.cos(angle) * dist;
+        const wy = cy + Math.sin(angle) * dist;
+        const wLen = gR * (0.03 + Math.random() * 0.08);
+        o.save();
+        o.translate(wx, wy);
+        o.rotate(angle + (Math.random() - 0.5) * 1);
+        const wGrad = o.createLinearGradient(0, 0, wLen, 0);
+        const wAlpha = 0.004 + Math.random() * 0.012;
+        wGrad.addColorStop(0, `rgba(140, 200, 255, ${wAlpha})`);
+        wGrad.addColorStop(1, 'rgba(0,0,0,0)');
+        o.fillStyle = wGrad;
+        o.fillRect(0, -0.5, wLen, 1);
+        o.restore();
+      }
+
+      o.globalAlpha = 1;
+      nebula3TexRef.current = off;
+    };
+    buildNebula3Texture();
+
     const handleMouse = (e: MouseEvent) => {
       mouseRef.current = { x: e.clientX / w, y: e.clientY / h };
     };
@@ -345,18 +607,50 @@ export function Starfield() {
         if (tex && gR > 0) {
           const texSize = tex.width;
           const breathe = 1 + 0.05 * Math.sin(time * 0.00015);
-          // Very subtle sway (not rotation — nebulae don't rotate)
           const swayX = Math.sin(time * 0.00008) * gR * 0.015;
           const swayY = Math.cos(time * 0.0001) * gR * 0.01;
 
           ctx.save();
           ctx.globalAlpha = breathe * 0.9;
-          ctx.drawImage(
-            tex,
-            gx - texSize / 2 + swayX,
-            gy - texSize / 2 + swayY,
-            texSize, texSize
-          );
+          ctx.drawImage(tex, gx - texSize / 2 + swayX, gy - texSize / 2 + swayY, texSize, texSize);
+          ctx.restore();
+        }
+      }
+
+      // ═══════════════════════════════════════════
+      // NEBULA 2 — Deep purple cosmic cloud
+      // ═══════════════════════════════════════════
+      {
+        const tex = nebula2TexRef.current;
+        const { gx, gy, gR } = nebula2Dims.current;
+        if (tex && gR > 0) {
+          const texSize = tex.width;
+          const breathe = 1 + 0.08 * Math.sin(time * 0.00018);
+          const swayX = Math.sin(time * 0.0001) * gR * 0.02;
+          const swayY = Math.cos(time * 0.00007) * gR * 0.015;
+
+          ctx.save();
+          ctx.globalAlpha = breathe * 0.8;
+          ctx.drawImage(tex, gx - texSize / 2 + swayX, gy - texSize / 2 + swayY, texSize, texSize);
+          ctx.restore();
+        }
+      }
+
+      // ═══════════════════════════════════════════
+      // NEBULA 3 — Electric blue cosmic cloud
+      // ═══════════════════════════════════════════
+      {
+        const tex = nebula3TexRef.current;
+        const { gx, gy, gR } = nebula3Dims.current;
+        if (tex && gR > 0) {
+          const texSize = tex.width;
+          const breathe = 1 + 0.06 * Math.sin(time * 0.00022);
+          const swayX = Math.sin(time * 0.00012) * gR * 0.018;
+          const swayY = Math.cos(time * 0.00009) * gR * 0.012;
+
+          ctx.save();
+          ctx.globalAlpha = breathe * 0.75;
+          ctx.drawImage(tex, gx - texSize / 2 + swayX, gy - texSize / 2 + swayY, texSize, texSize);
           ctx.restore();
         }
       }
@@ -418,20 +712,76 @@ export function Starfield() {
         ctx.restore();
       }
 
-      // Stars with parallax and hue
-      stars.forEach(star => {
+      // Stars with parallax, hue, and BLACK HOLE GRAVITY
+      // Black hole parameters (must match BlackHole.tsx)
+      const bhx = w * 0.78;
+      const bhy = h * 0.35;
+      const bhR = Math.min(w, h) * 0.22;
+      const bhEventHorizon = bhR * 0.46;
+
+      for (let i = stars.length - 1; i >= 0; i--) {
+        const star = stars[i];
         const parallaxX = (mx - 0.5) * star.layer * 10;
         const parallaxY = (my - 0.5) * star.layer * 10;
+
+        // ── Black hole gravitational interaction ──
+        const dx = star.x - bhx;
+        const dy = star.y - bhy;
+        const distToBH = Math.sqrt(dx * dx + dy * dy);
+        const gravityInfluence = bhR * 3.5;
+
+        if (distToBH < gravityInfluence) {
+          // Gravity gets stronger closer to black hole
+          const gravStrength = 0.0008 * (1 - distToBH / gravityInfluence) * (1 - distToBH / gravityInfluence);
+          const angleToBH = Math.atan2(dy, dx);
+          star.vx -= Math.cos(angleToBH) * gravStrength;
+          star.vy -= Math.sin(angleToBH) * gravStrength;
+
+          // Mark as captured if close enough
+          if (distToBH < bhR * 1.8 && !star.captured) {
+            star.captured = true;
+            star.fallAngle = angleToBH;
+            star.fallSpeed = 0.08 + Math.random() * 0.15;
+            star.fallR = distToBH;
+          }
+        }
+
+        // ── Captured stars: spiral into black hole ──
+        if (star.captured) {
+          star.fallSpeed += 0.00015 * (1 + 1 / Math.max(star.fallR / bhR, 0.1));
+          star.fallR -= star.fallSpeed;
+          star.fallAngle += 0.015 / Math.max(star.fallR / bhR, 0.1); // tighter spirals
+          star.x = bhx + Math.cos(star.fallAngle) * star.fallR;
+          star.y = bhy + Math.sin(star.fallAngle) * star.fallR * 0.42;
+          star.opacity = Math.max(0, star.opacity - 0.002); // fade as it approaches
+
+          // Annihilated at event horizon
+          if (star.fallR < bhEventHorizon || star.opacity <= 0) {
+            // Spawn replacement star far from black hole
+            const spawnAngle = Math.random() * Math.PI * 2;
+            const spawnDist = Math.max(w, h) * 0.6 + Math.random() * Math.max(w, h) * 0.4;
+            const spawnX = bhx + Math.cos(spawnAngle) * spawnDist;
+            const spawnY = bhy + Math.sin(spawnAngle) * spawnDist;
+            // Clamp to canvas
+            star.x = Math.max(0, Math.min(w, spawnX));
+            star.y = Math.max(0, Math.min(h, spawnY));
+            star.vx = 0;
+            star.vy = 0;
+            star.captured = false;
+            star.fallSpeed = 0;
+            star.fallR = 0;
+            star.opacity = 0.15 + Math.random() * 0.4; // fresh star
+            continue;
+          }
+        } else {
+          // Normal star drift (only for non-captured stars)
+          star.y += STAR_SPEEDS[star.layer] * (1 + star.vy * 0.1);
+          if (star.y > h + 8) { star.y = -8; star.x = Math.random() * w; star.vx = 0; star.vy = 0; }
+          if (star.y < -8) star.y = h + 8;
+        }
+
         let sx = star.x + parallaxX;
         let sy = star.y + parallaxY;
-
-        // Drift
-        star.y += STAR_SPEEDS[star.layer];
-        if (star.y > h + 8) {
-          star.y = -8;
-          star.x = Math.random() * w;
-        }
-        if (star.y < -8) star.y = h + 8;
 
         // Twinkle
         star.twinklePhase += star.twinkleSpeed;
@@ -439,46 +789,72 @@ export function Starfield() {
         const baseOpacity = star.opacity;
         const finalOpacity = baseOpacity * (0.55 + 0.45 * twinkle);
 
+        // ── Render captured stars with redshift ──
         ctx.save();
         ctx.globalAlpha = finalOpacity;
 
-        // Glow with hue
-        const glowColor = `hsla(${star.hue}, 60%, 75%, 1)`;
-        const glowColorMid = `hsla(${star.hue}, 50%, 65%, 0.5)`;
+        if (star.captured) {
+          // Redshift: hue shifts toward red and gains intensity as it falls
+          const proxToBH = 1 - Math.max(0, star.fallR - bhEventHorizon) / (bhR * 1.8);
+          const fallHue = star.hue - proxToBH * 60;
+          const trailColor = `hsla(${fallHue}, 70%, 70%, 1)`;
+          const trailColorMid = `hsla(${fallHue}, 55%, 55%, 0.6)`;
 
-        const gradient = ctx.createRadialGradient(sx, sy, 0, sx, sy, star.r * 3);
-        gradient.addColorStop(0, glowColor);
-        gradient.addColorStop(0.25, glowColorMid);
-        gradient.addColorStop(1, 'rgba(0,0,0,0)');
-        ctx.fillStyle = gradient;
-        ctx.beginPath();
-        ctx.arc(sx, sy, star.r * 3, 0, Math.PI * 2);
-        ctx.fill();
+          // Longer trail for captured stars
+          const gradient = ctx.createRadialGradient(sx, sy, 0, sx, sy, star.r * 4);
+          gradient.addColorStop(0, trailColor);
+          gradient.addColorStop(0.2, trailColorMid);
+          gradient.addColorStop(0.6, `hsla(${fallHue}, 40%, 35%, 0.15)`);
+          gradient.addColorStop(1, 'rgba(0,0,0,0)');
+          ctx.fillStyle = gradient;
+          ctx.beginPath();
+          ctx.arc(sx, sy, star.r * 4, 0, Math.PI * 2);
+          ctx.fill();
 
-        // Core
-        ctx.fillStyle = `hsla(${star.hue}, 20%, 95%, 1)`;
-        ctx.beginPath();
-        ctx.arc(sx, sy, star.r * 0.5, 0, Math.PI * 2);
-        ctx.fill();
+          // Core stays bright
+          ctx.fillStyle = `hsla(${fallHue}, 15%, 90%, 0.8)`;
+          ctx.beginPath();
+          ctx.arc(sx, sy, star.r * 0.6, 0, Math.PI * 2);
+          ctx.fill();
+        } else {
+          // Normal star rendering
+          const glowColor = `hsla(${star.hue}, 60%, 75%, 1)`;
+          const glowColorMid = `hsla(${star.hue}, 50%, 65%, 0.5)`;
 
-        // Diffraction spike on brightest near-layer stars
-        if (star.layer === 2 && star.r > 1.2 && star.opacity > 0.7) {
-          const spikeAlpha = finalOpacity * 0.35;
-          ctx.globalAlpha = spikeAlpha;
-          ctx.strokeStyle = `hsla(${star.hue}, 30%, 85%, 1)`;
-          ctx.lineWidth = 0.5;
-          const spikeLen = star.r * 4;
-          for (let d = 0; d < 4; d++) {
-            const da = (d / 4) * Math.PI + Math.PI / 4;
-            ctx.beginPath();
-            ctx.moveTo(sx + Math.cos(da) * star.r, sy + Math.sin(da) * star.r);
-            ctx.lineTo(sx + Math.cos(da) * spikeLen, sy + Math.sin(da) * spikeLen);
-            ctx.stroke();
+          const gradient = ctx.createRadialGradient(sx, sy, 0, sx, sy, star.r * 3);
+          gradient.addColorStop(0, glowColor);
+          gradient.addColorStop(0.25, glowColorMid);
+          gradient.addColorStop(1, 'rgba(0,0,0,0)');
+          ctx.fillStyle = gradient;
+          ctx.beginPath();
+          ctx.arc(sx, sy, star.r * 3, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Core
+          ctx.fillStyle = `hsla(${star.hue}, 20%, 95%, 1)`;
+          ctx.beginPath();
+          ctx.arc(sx, sy, star.r * 0.5, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Diffraction spike on brightest near-layer stars
+          if (star.layer === 2 && star.r > 1.2 && star.opacity > 0.7) {
+            const spikeAlpha = finalOpacity * 0.35;
+            ctx.globalAlpha = spikeAlpha;
+            ctx.strokeStyle = `hsla(${star.hue}, 30%, 85%, 1)`;
+            ctx.lineWidth = 0.5;
+            const spikeLen = star.r * 4;
+            for (let d = 0; d < 4; d++) {
+              const da = (d / 4) * Math.PI + Math.PI / 4;
+              ctx.beginPath();
+              ctx.moveTo(sx + Math.cos(da) * star.r, sy + Math.sin(da) * star.r);
+              ctx.lineTo(sx + Math.cos(da) * spikeLen, sy + Math.sin(da) * spikeLen);
+              ctx.stroke();
+            }
           }
         }
 
         ctx.restore();
-      });
+      }
 
       // Foreground "out of focus" cinematic stars — dramatic bloom
       {
@@ -672,6 +1048,8 @@ export function Starfield() {
       window.removeEventListener('resize', resize);
       window.removeEventListener('mousemove', handleMouse);
       galaxyTexRef.current = null;
+      nebula2TexRef.current = null;
+      nebula3TexRef.current = null;
     };
   }, [initStars, spawnShootingStar, initFGStars]);
 
