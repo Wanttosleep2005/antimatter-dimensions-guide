@@ -18,34 +18,76 @@ const currencyDefs: Record<string, { label: string; color: string }> = {
   AD:  { label: '反物质维度乘数 (AD) — 符文P的词条效果', color: '#ef4444' },
 };
 
-// Guild tree node definitions (from original q0)
-const guildTermDefs: Record<string, string> = {
-  DILR: '复兴树节点 — 膨胀相关保留/自动化',
-  TTM: '复兴树节点 — 时间之理相关',
-  ACHNR: '复兴树节点 — 成就保留相关',
-  ECB: '复兴树节点 — 永恒挑战保留相关',
-  ECR: '复兴树节点 — 永恒挑战相关',
-  TTF: '复兴树节点 — 时间之理相关',
-  TTS: '复兴树节点 — 时间研究相关',
-  TGR: '复兴树节点 — 时间膨胀/超光速相关',
-  ACT: '复兴树节点 — 自动化相关',
-  ATT: '复兴树节点 — 自动化相关',
-  ATD: '复兴树节点 — 自动化相关',
-  REAL: '复兴树节点 — 现实 (Reality) 解锁相关',
-  PASS: '复兴树节点 — 被动路径相关',
-  MATTER: '复兴树节点 — 反物质相关',
-  START: '复兴树节点 — 早期现实起始',
-  YOUNG: '复兴树节点 — 早期现实任务',
-  DM: '复兴树节点 — 暗物质/维度相关',
-  DR: '复兴树节点 — 现实/膨胀相关',
-  DAU: '复兴树节点 — 膨胀升级自动化',
-  CYER: '复兴树节点 — 天界/现实阶段',
-  EU1: '复兴树节点 — 永恒升级相关',
-  EU2: '复兴树节点 — 永恒升级相关',
+// Guild tree node definitions with category colors
+const guildTermDefs: Record<string, { label: string; color: string }> = {
+  // ── Purple: EC / Challenge / Passive / Automation ──
+  ECB:   { label: '复兴树 — 永恒挑战保留', color: '#a855f7' },
+  ECR:   { label: '复兴树 — 永恒挑战相关', color: '#a855f7' },
+  EC1R:  { label: '复兴树 — EC1 相关', color: '#a855f7' },
+  EC2R:  { label: '复兴树 — EC2 相关', color: '#a855f7' },
+  EC3R:  { label: '复兴树 — EC3 相关', color: '#a855f7' },
+  EC5R:  { label: '复兴树 — EC5 相关', color: '#a855f7' },
+  ACT:   { label: '复兴树 — 自动化相关', color: '#a855f7' },
+  PASS:  { label: '复兴树 — 被动路径相关', color: '#a855f7' },
+  IDL:   { label: '复兴树 — 闲置路径相关', color: '#a855f7' },
+  EU1:   { label: '复兴树 — 永恒升级相关', color: '#a855f7' },
+  EU2:   { label: '复兴树 — 永恒升级相关', color: '#a855f7' },
+  SEP1:  { label: '复兴树 — 分离路径 1', color: '#a855f7' },
+  SEP2:  { label: '复兴树 — 分离路径 2', color: '#a855f7' },
+  SEP3:  { label: '复兴树 — 分离路径 3', color: '#a855f7' },
+  ATT:   { label: '复兴树 — 自动化相关', color: '#a855f7' },
+  ATP:   { label: '复兴树 — 自动化相关', color: '#a855f7' },
+
+  // ── Red: Time Study / Theory / Dilation / DAS ──
+  TTS:   { label: '复兴树 — 时间研究相关', color: '#ef4444' },
+  TTF:   { label: '复兴树 — 时间之理相关', color: '#ef4444' },
+  TTM:   { label: '复兴树 — 时间之理相关', color: '#ef4444' },
+  PEC1:  { label: '复兴树 — EC1 前置', color: '#ef4444' },
+  PEC2:  { label: '复兴树 — EC2 前置', color: '#ef4444' },
+  PEC3:  { label: '复兴树 — EC3 前置', color: '#ef4444' },
+  IDAS:  { label: '复兴树 — ID/AD 相关', color: '#ef4444' },
+  REPAS: { label: '复兴树 — 复制相关', color: '#ef4444' },
+  DAU:   { label: '复兴树 — 膨胀升级自动化', color: '#ef4444' },
+  DAB:   { label: '复兴树 — 膨胀/AD 相关', color: '#ef4444' },
+  DAS:   { label: '复兴树 — 膨胀/AD 相关', color: '#ef4444' },
+  TGR:   { label: '复兴树 — 时间膨胀/超光速相关', color: '#ef4444' },
+
+  // ── Yellow/Gold: Achievement nodes ──
+  ACH1:  { label: '复兴树 — 成就 1', color: '#f59e0b' },
+  ACH2:  { label: '复兴树 — 成就 2', color: '#f59e0b' },
+  ACH3:  { label: '复兴树 — 成就 3', color: '#f59e0b' },
+  ACH4:  { label: '复兴树 — 成就 4', color: '#f59e0b' },
+  ACHNR: { label: '复兴树 — 成就保留相关', color: '#f59e0b' },
+
+  // ── Brown: SIP / IDR ──
+  SIP1:  { label: '复兴树 — 奇异研究 1', color: '#a07040' },
+  SIP2:  { label: '复兴树 — 奇异研究 2', color: '#a07040' },
+  IDR:   { label: '复兴树 — ID 相关', color: '#a07040' },
+
+  // ── Other nodes (default accent color) ──
+  START: { label: '复兴树 — 早期现实起始', color: '#22c55e' },
+  SAM:   { label: '复兴树 — SAM 相关', color: '#22c55e' },
+  ANR:   { label: '复兴树 — ANR 相关', color: '#6366f1' },
+  STP:   { label: '复兴树 — STP 相关', color: '#22c55e' },
+  REAL:  { label: '复兴树 — 现实解锁相关', color: '#22c55e' },
+  DILR:  { label: '复兴树 — 膨胀相关保留/自动化', color: '#6366f1' },
+  TP1:   { label: '复兴树 — 超光速 1', color: '#6366f1' },
+  TP2:   { label: '复兴树 — 超光速 2', color: '#6366f1' },
+  TP3:   { label: '复兴树 — 超光速 3', color: '#6366f1' },
+  TP4:   { label: '复兴树 — 超光速 4', color: '#6366f1' },
+  DU1:   { label: '复兴树 — 膨胀升级 1', color: '#6366f1' },
+  DU2:   { label: '复兴树 — 膨胀升级 2', color: '#6366f1' },
+  // Legacy aliases
+  ATD:   { label: '复兴树 — 自动化相关', color: '#a855f7' },
+  CYER:  { label: '复兴树 — 天界/现实阶段', color: '#6366f1' },
 };
 
-// Game term regex — multi-letter terms only (single letters handled by rune processing)
-const GAME_TERM_RE = /\b(EC\d+|C\d+|IC\d+|IU\d+|PU\d+|Cel\d+|TS\d+|ID\d+|r\d{2,3}|RU\d+|DU\d+|EU\d+|TD\d+|TP\d+|ACH\d+|IM\d+|DILR|TTM|ACHNR|ECB|ECR|TTF|TTS|TGR|ACT|ATT|ATD|REAL|PASS|MATTER|START|YOUNG|DM|DR|DAU|CYER|AM|IP|EP|TT|DT|RM|IM|RS|TP|TC|AP|RU|PP|AD)\b/g;
+// Build dynamic game term regex from guild terms
+const GUILD_TERMS = Object.keys(guildTermDefs).sort((a, b) => b.length - a.length).join('|');
+const GAME_TERM_RE = new RegExp(
+  `\\b(EC\\d+|C\\d+|IC\\d+|IU\\d+|PU\\d+|Cel\\d+|TS\\d+|ID\\d+|r\\d{2,3}|RU\\d+|DU\\d+|EU\\d+|TD\\d+|TP\\d+|ACH\\d+|IM\\d+|${GUILD_TERMS}|AM|IP|EP|TT|DT|RM|IM|RS|TP|TC|AP|RU|PP|AD)\\b`,
+  'g',
+);
 
 // Currency abbreviation regex. Do not capture numbered terms like RU11/TS181.
 const CURRENCY_RE = /(?<![a-zA-Z])(AM|IP|EP|TT|DT|RM|IM|RS|TP|TC|AP|RU|PP|AD)(?![a-zA-Z0-9])/g;
@@ -56,11 +98,6 @@ const RUNE_COMBO_RE = /(?<![a-zA-Z<>])([CPITRDEY]{3,6})(?![a-zA-Z<>])/g;
 const RUNE_COMBO_EXCLUDES = new Set([
   ...Object.keys(currencyDefs),
   ...Object.keys(guildTermDefs),
-  'REAL',
-  'PASS',
-  'START',
-  'YOUNG',
-  'MATTER',
 ]);
 
 // Rune spec: letter + braille + level — R⠴(134), D⠆(12)
@@ -252,9 +289,9 @@ export function highlightTerms(text: string, searchQuery?: string): string {
       const achNum = match.slice(1);
       return `<span class="game-term" data-tip="成就 r${achNum} — Achievement">${match}</span>`;
     }
-    const tip = guildTermDefs[match];
-    if (tip) {
-      return `<span class="game-term" data-tip="${escapeAttr(tip)}">${match}</span>`;
+    const guildDef = guildTermDefs[match];
+    if (guildDef) {
+      return `<span class="game-term" style="color:${guildDef.color};background:${guildDef.color}18;border-color:${guildDef.color}66" data-tip="${escapeAttr(guildDef.label)}">${match}</span>`;
     }
     const gameTip = getGameTermTip(match);
     if (gameTip) {
