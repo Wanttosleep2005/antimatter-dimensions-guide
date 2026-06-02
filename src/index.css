@@ -2396,6 +2396,38 @@ p .rune-spec {
 }
 
 /* ================================================================
+   32. BOOKMARK BUTTON — on section headings
+   ================================================================ */
+.guide-section-bookmark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  flex-shrink: 0;
+  margin-left: 6px;
+  transition: all 0.2s ease;
+  opacity: 0;
+}
+.guide-section:hover .guide-section-bookmark,
+.guide-section-bookmark.is-active {
+  opacity: 1;
+}
+.guide-section-bookmark:hover {
+  background: var(--accent-light);
+  color: var(--accent-color);
+  border-color: var(--border-accent);
+}
+.guide-section-bookmark.is-active {
+  color: var(--accent-color);
+}
+
+/* ================================================================
    25. PRINT STYLES
    ================================================================ */
 @media print {

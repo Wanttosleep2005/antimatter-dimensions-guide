@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useProgress } from '../hooks/useProgress';
 import { chapterIndex, loadChapter } from '../data/loadChapter';
 import { cleanTitle } from '../utils/titleClean';
+import { getBookmarks, type Bookmark } from '../utils/bookmarks';
 import type { Chapter } from '../types';
 
 type ScrollTriggerInstance = {
@@ -119,6 +120,49 @@ export function HomePage({ completed, total, inProgress }: { completed: number; 
 
   const openLastOrFirst = () => navigate(lastChapter ? `/chapter/${lastChapter.id}` : '/chapter/1');
 
+  // ── Quick jump ──
+  const [jumpQuery, setJumpQuery] = useState('');
+  const jumpInputRef = useRef<HTMLInputElement>(null);
+  const jumpMatches = useMemo(() => {
+    if (!jumpQuery.trim()) return [];
+    const q = jumpQuery.toLowerCase();
+    return chapterIndex.filter(c => {
+      if (String(c.id) === q) return true;
+      return cleanTitle(c.title).toLowerCase().includes(q) || c.title.toLowerCase().includes(q);
+    }).slice(0, 5);
+  }, [jumpQuery]);
+
+  const handleJumpSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!jumpQuery.trim()) return;
+    const num = parseInt(jumpQuery);
+    if (num >= 1 && num <= 20) { navigate(`/chapter/${num}`); return; }
+    if (jumpMatches.length > 0) { navigate(`/chapter/${jumpMatches[0].id}`); }
+  };
+
+  // ── Recent chapters ──
+  const recentChapters = useMemo(() => {
+    try {
+      const raw = localStorage.getItem('ad-recent-chapters');
+      if (!raw) return [];
+      const list: { id: number; title: string; ts: string }[] = JSON.parse(raw);
+      return list.slice(0, 5);
+    } catch { return []; }
+  }, []);
+
+  // ── Bookmarks ──
+  const [bookmarks, setBookmarks] = useState<Bookmark[]>([]);
+  useEffect(() => { setBookmarks(getBookmarks()); }, []);
+
+  // Phase color for grid
+  const phaseCssVar = (id: number) => {
+    if (id <= 5) return 'var(--phase-infinity)';
+    if (id <= 9) return 'var(--phase-eternity)';
+    if (id <= 11) return 'var(--phase-dilation)';
+    if (id <= 13) return 'var(--phase-reality)';
+    return 'var(--phase-celestial)';
+  };
+
   return (
     <main className="guide-tool-shell overflow-x-hidden w-full max-w-full">
       <section className="tool-hero relative px-4 sm:px-6 lg:px-8 py-20 md:py-28">
@@ -140,6 +184,153 @@ export function HomePage({ completed, total, inProgress }: { completed: number; 
                 搜索时间研究
               </button>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── Control panel grid ── */}
+      <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pb-8 md:pb-12">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+
+          {/* Quick jump */}
+          <div className="console-panel p-5">
+            <h3 className="text-sm font-bold mb-3" style={{ fontFamily: 'var(--font-heading)', color: 'var(--text-primary)' }}>
+              快速跳转
+            </h3>
+            <form onSubmit={handleJumpSubmit} className="relative">
+              <svg className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-tertiary)]" width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5">
+                <path d="M3 6l3 3 5-5" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+              <input
+                ref={jumpInputRef}
+                type="text"
+                value={jumpQuery}
+                onChange={e => setJumpQuery(e.target.value)}
+                placeholder="输入章节号或名称..."
+                className="w-full pl-9 pr-3 py-2 rounded-lg text-sm outline-none border transition-colors"
+                style={{
+                  background: 'var(--bg-primary)',
+                  border: '1px solid var(--border-color)',
+                  color: 'var(--text-secondary)',
+                  fontFamily: 'var(--font-body)',
+                }}
+                onFocus={() => {}} /* placeholder for onFocus */
+                onKeyDown={e => { if (e.key === 'Escape') setJumpQuery(''); }}
+              />
+            </form>
+            {jumpMatches.length > 0 && (
+              <div className="mt-2 space-y-0.5">
+                {jumpMatches.map(c => (
+                  <button
+                    key={c.id}
+                    type="button"
+                    onClick={() => { navigate(`/chapter/${c.id}`); setJumpQuery(''); }}
+                    className="w-full text-left px-3 py-1.5 rounded text-xs flex items-center gap-2 hover:bg-[var(--sidebar-hover)] transition-colors"
+                    style={{ color: 'var(--text-secondary)' }}
+                  >
+                    <span className="font-mono font-bold text-[10px] px-1.5 py-0.5 rounded" style={{ background: 'var(--accent-light)', color: 'var(--accent-color)' }}>{String(c.id).padStart(2, '0')}</span>
+                    {cleanTitle(c.title)}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Recent reading */}
+          <div className="console-panel p-5">
+            <h3 className="text-sm font-bold mb-3" style={{ fontFamily: 'var(--font-heading)', color: 'var(--text-primary)' }}>
+              最近阅读
+            </h3>
+            {recentChapters.length === 0 ? (
+              <p className="text-xs" style={{ color: 'var(--text-tertiary)' }}>暂无记录，开始阅读第一章吧</p>
+            ) : (
+              <div className="space-y-2">
+                {recentChapters.map((rc) => (
+                  <Link
+                    key={rc.id}
+                    to={`/chapter/${rc.id}`}
+                    className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs hover:bg-[var(--sidebar-hover)] transition-colors group"
+                    style={{ color: 'var(--text-secondary)' }}
+                  >
+                    <span className="w-5 h-5 rounded flex items-center justify-center text-[10px] font-bold font-mono shrink-0" style={{ background: 'var(--accent-light)', color: 'var(--accent-color)' }}>{rc.id}</span>
+                    <span className="flex-1 truncate">{cleanTitle(rc.title)}</span>
+                    <span className="text-[10px] shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" style={{ color: 'var(--text-tertiary)' }}>{rc.ts}</span>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Bookmarks */}
+          <div className="console-panel p-5">
+            <h3 className="text-sm font-bold mb-3" style={{ fontFamily: 'var(--font-heading)', color: 'var(--text-primary)' }}>
+              书签
+            </h3>
+            {bookmarks.length === 0 ? (
+              <p className="text-xs" style={{ color: 'var(--text-tertiary)' }}>阅读时点击小节标题旁的书签图标收藏</p>
+            ) : (
+              <div className="space-y-2 max-h-32 overflow-y-auto">
+                {bookmarks.slice(0, 6).map((bm) => (
+                  <Link
+                    key={bm.sectionId}
+                    to={`/chapter/${bm.chapterId}#${bm.sectionId}`}
+                    className="flex items-center gap-2 px-3 py-1.5 rounded text-xs hover:bg-[var(--sidebar-hover)] transition-colors group"
+                    style={{ color: 'var(--text-secondary)' }}
+                  >
+                    <span className="text-[10px] font-mono font-bold shrink-0 px-1.5 py-0.5 rounded" style={{ background: 'var(--accent-light)', color: 'var(--accent-color)' }}>Ch{bm.chapterId}</span>
+                    <span className="flex-1 truncate">{bm.sectionTitle}</span>
+                    <svg className="shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="var(--accent-color)" strokeWidth="1.5">
+                      <path d="M3 2l4 4-4 4" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
+
+        </div>
+
+        {/* Chapter mini grid */}
+        <div className="console-panel p-5 mt-4">
+          <h3 className="text-sm font-bold mb-4" style={{ fontFamily: 'var(--font-heading)', color: 'var(--text-primary)' }}>
+            章节速览
+          </h3>
+          <div className="grid grid-cols-5 sm:grid-cols-10 gap-2">
+            {chapterIndex.map((c) => {
+              const status = getStatus(c.id);
+              const filled = status === 'completed' || status === 'in-progress';
+              return (
+                <Link
+                  key={c.id}
+                  to={`/chapter/${c.id}`}
+                  className="flex flex-col items-center gap-1 group"
+                  title={`${cleanTitle(c.title)}${filled ? ' · 已读' : ''}`}
+                >
+                  <div
+                    className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg flex items-center justify-center text-xs font-bold font-mono transition-all group-hover:scale-110 group-hover:shadow-lg"
+                    style={{
+                      background: filled ? phaseCssVar(c.id) : 'var(--bg-tertiary)',
+                      color: filled ? '#fff' : 'var(--text-tertiary)',
+                      border: filled ? 'none' : '1px solid var(--border-color)',
+                      boxShadow: filled ? `0 0 12px ${phaseCssVar(c.id)}44` : undefined,
+                    }}
+                  >
+                    {c.id}
+                  </div>
+                  <span className="text-[10px] hidden sm:block truncate max-w-[64px] text-center" style={{ color: 'var(--text-tertiary)' }}>
+                    {cleanTitle(c.title).slice(0, 4)}
+                  </span>
+                </Link>
+              );
+            })}
+          </div>
+          <div className="mt-3 flex items-center gap-4 text-[10px]" style={{ color: 'var(--text-tertiary)' }}>
+            <span className="flex items-center gap-1.5">
+              <span className="w-3 h-3 rounded" style={{ background: 'var(--phase-infinity)' }} /> 已读
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="w-3 h-3 rounded border" style={{ background: 'var(--bg-tertiary)', borderColor: 'var(--border-color)' }} /> 未读
+            </span>
           </div>
         </div>
       </section>

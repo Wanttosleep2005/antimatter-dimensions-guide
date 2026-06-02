@@ -4,6 +4,7 @@ import type { Chapter } from '../../types';
 import { ReadingProgress } from '../progress/ReadingProgress';
 import { highlightTerms } from '../../utils/highlightTerms';
 import { injectGlossaryTooltips } from '../../utils/glossaryTooltips';
+import { toggleBookmark, isBookmarked } from '../../utils/bookmarks';
 import { useScrollFade } from '../../hooks/useScrollFade';
 
 interface GuideContentProps {
@@ -283,6 +284,28 @@ export function GuideContent({ chapter, chapterId, status, onStatusChange, fontS
                   <h2 id={sectionId} className="guide-section-heading">
                     {sectionTitle.marker && <span className="guide-section-marker">小节 {sectionTitle.marker}</span>}
                     <span className="guide-section-title-text" dangerouslySetInnerHTML={{ __html: injectGlossaryTooltips(highlightTerms(sectionTitle.label, searchQuery)) }} />
+                    <button
+                      type="button"
+                      className={`guide-section-bookmark ${isBookmarked(sectionId) ? 'is-active' : ''}`}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        toggleBookmark({
+                          chapterId,
+                          chapterTitle: chapter.title,
+                          sectionId,
+                          sectionTitle: sectionTitle.label,
+                          savedAt: new Date().toISOString(),
+                        });
+                        // Force re-render by toggling internal state
+                        (e.currentTarget as HTMLButtonElement).classList.toggle('is-active');
+                      }}
+                      aria-label={isBookmarked(sectionId) ? '取消书签' : '添加书签'}
+                      title={isBookmarked(sectionId) ? '取消书签' : '添加书签'}
+                    >
+                      <svg width="14" height="14" viewBox="0 0 14 14" fill={isBookmarked(sectionId) ? 'var(--accent-color)' : 'none'} stroke="currentColor" strokeWidth="1.5">
+                        <path d="M10.5 2H3.5a.5.5 0 0 0-.5.5v10l4-2.5 4 2.5v-10a.5.5 0 0 0-.5-.5z" />
+                      </svg>
+                    </button>
                   </h2>
                 )}
                 {section.content.map((text, j) => {

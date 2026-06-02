@@ -40,6 +40,17 @@ export function ChapterPage({ onStatusChange, getStatus, fontSize, onFontSizeCha
     if (chapterMeta) {
       onStatusChange(chapterId, 'in-progress');
       localStorage.setItem('ad-guide-last-chapter', JSON.stringify({ id: chapterId, title: chapterMeta.title }));
+
+      // Track recent chapters
+      try {
+        const raw = localStorage.getItem('ad-recent-chapters');
+        const list: { id: number; title: string; ts: string }[] = raw ? JSON.parse(raw) : [];
+        const filtered = list.filter(c => c.id !== chapterId);
+        const now = new Date();
+        const ts = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+        filtered.unshift({ id: chapterId, title: chapterMeta.title, ts });
+        localStorage.setItem('ad-recent-chapters', JSON.stringify(filtered.slice(0, 10)));
+      } catch { /* ignore */ }
     }
   }, [chapterId]);
 
