@@ -989,10 +989,10 @@ button[class*="card"]:hover {
 .tool-hero-title {
   max-width: 68rem;
   font-family: var(--font-heading);
-  font-size: clamp(3rem, 6vw, 6.4rem);
+  font-size: clamp(2.8rem, 5.5vw, 6.4rem);
   font-weight: 850;
   letter-spacing: 0;
-  line-height: 0.96;
+  line-height: 1.08;
 }
 
 .tool-hero-actions {

@@ -1,11 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { useProgress } from '../../hooks/useProgress';
 import { loadChapter } from '../../data/loadChapter';
 import { cleanTitle } from '../../utils/titleClean';
 import { extractStudyTrees, extractAchievements } from '../../data/extractTools';
-
-interface SidebarProps {}
 
 type SidebarChapter = {
   id: number;
@@ -89,9 +86,9 @@ function parseSectionTitle(title: string) {
   return { marker: match[1], label: match[2].trim() };
 }
 
-export function Sidebar({}: SidebarProps) {
+export function Sidebar({ getStatus }: { getStatus: (id: number) => 'not-started' | 'in-progress' | 'completed' }) {
   const location = useLocation();
-  const { getStatus } = useProgress();  const [collapsed, setCollapsed] = useState(() => window.innerWidth < 1024);
+  const [collapsed, setCollapsed] = useState(() => window.innerWidth < 1024);
   const [expandedPhases, setExpandedPhases] = useState<Set<number>>(ALL_PHASES);
   const [expandedChapters, setExpandedChapters] = useState<Set<number>>(() => new Set());
   const [sectionMap, setSectionMap] = useState<Record<number, SidebarSection[]>>({});

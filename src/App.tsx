@@ -108,6 +108,7 @@ function AppRoutes() {
     <>
       <Layout
         onOpenSearch={() => setSearchOpen(true)}
+        getStatus={getStatus}
       >
         <Routes>
           <Route

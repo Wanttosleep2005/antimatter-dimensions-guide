@@ -155,7 +155,7 @@ export function HomePage({
           <div className="flex flex-col gap-10 lg:flex-row lg:items-end lg:justify-between">
             <div className="max-w-4xl">
               <div className="tool-sigil mb-8" aria-hidden="true">&infin;</div>
-              <h1 className="tool-hero-title text-gradient whitespace-nowrap">反物质维度攻略控制台</h1>
+              <h1 className="tool-hero-title text-gradient">反物质维度攻略控制台</h1>
             </div>
             <div className="tool-hero-actions">
               <button type="button" onClick={openContinue} className="ripple-cta cta-primary press-spring">
