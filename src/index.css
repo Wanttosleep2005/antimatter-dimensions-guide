@@ -336,6 +336,40 @@ aside button {
   transition: width 0.28s cubic-bezier(0.16,1,0.3,1), transform 0.28s cubic-bezier(0.16,1,0.3,1);
 }
 
+/* Sidebar right-edge gradient fade — soft transition to content */
+.guide-sidebar.is-expanded::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  background: linear-gradient(90deg,
+    transparent 0%,
+    transparent 75%,
+    rgba(12, 6, 24, 0.4) 90%,
+    rgba(12, 6, 24, 0.85) 100%
+  );
+}
+
+/* Sidebar scroll bottom fade */
+.guide-sidebar-scroll::after {
+  content: '';
+  position: sticky;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: block;
+  height: 4rem;
+  pointer-events: none;
+  background: linear-gradient(0deg,
+    rgba(12, 6, 24, 0.95) 0%,
+    rgba(12, 6, 24, 0.6) 35%,
+    transparent 100%
+  );
+  margin-top: -4rem;
+  z-index: 1;
+}
+
 .guide-sidebar.is-expanded {
   width: 22.25rem;
   transform: translateX(0);

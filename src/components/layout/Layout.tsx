@@ -2,6 +2,7 @@ import { ReactNode } from 'react';
 import { Sidebar } from './Sidebar';
 import { Header } from './Header';
 import { Starfield } from '../effects/Starfield';
+import { BlackHole } from '../effects/BlackHole';
 
 interface LayoutProps {
   children: ReactNode;
@@ -12,6 +13,7 @@ export function Layout({ children, onOpenSearch }: LayoutProps) {
   return (
     <div className="min-h-screen bg-[var(--bg-primary)] relative overflow-x-hidden w-full max-w-full">
       <Starfield />
+      <BlackHole />
       <Sidebar />
       <div className="lg:ml-[var(--sidebar-width)] transition-[margin] duration-300 relative z-[1]">
         <Header onOpenSearch={onOpenSearch} />

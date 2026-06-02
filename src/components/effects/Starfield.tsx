@@ -21,7 +21,7 @@ interface ShootingStar {
   trail: { x: number; y: number }[];
 }
 
-const STAR_COUNTS = [100, 60, 30]; // far, mid, near
+const STAR_COUNTS = [160, 90, 45]; // far, mid, near — increased for premium depth
 const STAR_SPEEDS = [0.06, 0.15, 0.30];
 const SHOOTING_STAR_INTERVAL = 4000;
 
@@ -45,7 +45,7 @@ export function Starfield() {
           twinkleSpeed: 0.003 + Math.random() * 0.025,
           twinklePhase: Math.random() * Math.PI * 2,
           layer,
-          hue: 240 + Math.random() * 60, // 240-300: blue-violet range
+          hue: 200 + Math.random() * 150, // 200-350: full blue-violet-warm spectrum
         });
       }
     });
@@ -99,27 +99,61 @@ export function Starfield() {
 
       ctx.clearRect(0, 0, w, h);
 
-      // Nebula blobs — larger, more dramatic
+      // ---- Premium nebula blobs — multi-layer with color breathing ----
       {
+        const breathe = 1 + 0.15 * Math.sin(time * 0.0002);
         const nebulae = [
-          { x: w * 0.12, y: h * 0.18, r: Math.min(w, h) * 0.30, color: '100, 60, 220', a: 0.04 },
-          { x: w * 0.82, y: h * 0.60, r: Math.min(w, h) * 0.35, color: '50, 40, 180', a: 0.035 },
-          { x: w * 0.45, y: h * 0.72, r: Math.min(w, h) * 0.28, color: '140, 70, 220', a: 0.03 },
-          { x: w * 0.70, y: h * 0.12, r: Math.min(w, h) * 0.25, color: '170, 90, 240', a: 0.025 },
-          { x: w * 0.35, y: h * 0.40, r: Math.min(w, h) * 0.22, color: '60, 130, 220', a: 0.02 },
-          { x: w * 0.90, y: h * 0.20, r: Math.min(w, h) * 0.18, color: '200, 100, 240', a: 0.015 },
+          // Large deep-space purple base
+          { x: w * 0.15, y: h * 0.20, r: Math.min(w, h) * 0.38, color: '120, 40, 240', a: 0.05 },
+          { x: w * 0.80, y: h * 0.55, r: Math.min(w, h) * 0.42, color: '60, 30, 200', a: 0.045 },
+          // Mid-layer violet/magenta hot spots
+          { x: w * 0.48, y: h * 0.68, r: Math.min(w, h) * 0.32, color: '160, 60, 230', a: 0.04 },
+          { x: w * 0.72, y: h * 0.15, r: Math.min(w, h) * 0.30, color: '190, 80, 250', a: 0.035 },
+          // Blue-cyan cool accents (near sidebar edge)
+          { x: w * 0.08, y: h * 0.45, r: Math.min(w, h) * 0.26, color: '70, 140, 240', a: 0.03 },
+          { x: w * 0.38, y: h * 0.35, r: Math.min(w, h) * 0.28, color: '80, 120, 220', a: 0.025 },
+          // Warm orange/gold micro-nebulae (near black hole)
+          { x: w * 0.88, y: h * 0.30, r: Math.min(w, h) * 0.22, color: '220, 90, 240', a: 0.02 },
+          { x: w * 0.92, y: h * 0.48, r: Math.min(w, h) * 0.20, color: '240, 110, 220', a: 0.018 },
+          // Subtle cyan wash top area
+          { x: w * 0.55, y: h * 0.05, r: Math.min(w, h) * 0.24, color: '160, 120, 240', a: 0.015 },
         ];
         nebulae.forEach(n => {
           const gradient = ctx.createRadialGradient(n.x, n.y, 0, n.x, n.y, n.r);
-          gradient.addColorStop(0, `rgba(${n.color}, ${n.a})`);
-          gradient.addColorStop(0.4, `rgba(${n.color}, ${n.a * 0.6})`);
-          gradient.addColorStop(0.7, `rgba(${n.color}, ${n.a * 0.15})`);
+          const baseAlpha = n.a * breathe;
+          gradient.addColorStop(0, `rgba(${n.color}, ${baseAlpha})`);
+          gradient.addColorStop(0.25, `rgba(${n.color}, ${baseAlpha * 0.7})`);
+          gradient.addColorStop(0.5, `rgba(${n.color}, ${baseAlpha * 0.35})`);
+          gradient.addColorStop(0.75, `rgba(${n.color}, ${baseAlpha * 0.1})`);
           gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
           ctx.fillStyle = gradient;
           ctx.beginPath();
           ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2);
           ctx.fill();
         });
+      }
+
+      // ---- Dust lanes — elongated elliptical gradients for depth ----
+      {
+        ctx.save();
+        const dustLanes = [
+          { x: w * 0.30, y: h * 0.50, rx: w * 0.55, ry: h * 0.06, rot: -0.15, a: 0.015 },
+          { x: w * 0.60, y: h * 0.35, rx: w * 0.40, ry: h * 0.04, rot: 0.12, a: 0.012 },
+        ];
+        dustLanes.forEach(dl => {
+          ctx.translate(dl.x, dl.y);
+          ctx.rotate(dl.rot);
+          const dustGrad = ctx.createRadialGradient(0, 0, 0, 0, 0, Math.max(dl.rx, dl.ry));
+          dustGrad.addColorStop(0, `rgba(100, 60, 200, ${dl.a})`);
+          dustGrad.addColorStop(0.4, `rgba(80, 40, 180, ${dl.a * 0.5})`);
+          dustGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+          ctx.fillStyle = dustGrad;
+          ctx.beginPath();
+          ctx.ellipse(0, 0, dl.rx, dl.ry, 0, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.setTransform(1, 0, 0, 1, 0, 0);
+        });
+        ctx.restore();
       }
 
       // Stars with parallax and hue
