@@ -11,6 +11,8 @@ interface Star {
   hue: number;
 }
 
+interface FGStar { x: number; y: number; r: number; opacity: number; hue: number; }
+
 interface ShootingStar {
   x: number;
   y: number;
@@ -21,9 +23,10 @@ interface ShootingStar {
   trail: { x: number; y: number }[];
 }
 
-const STAR_COUNTS = [160, 90, 45]; // far, mid, near — increased for premium depth
+const STAR_COUNTS = [160, 90, 45];
 const STAR_SPEEDS = [0.06, 0.15, 0.30];
 const SHOOTING_STAR_INTERVAL = 4000;
+const FG_STAR_COUNT = 18; // foreground "out of focus" stars
 
 export function Starfield() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -35,6 +38,30 @@ export function Starfield() {
   // Offscreen galaxy texture — rendered once, rotated per frame
   const galaxyTexRef = useRef<HTMLCanvasElement | null>(null);
   const galaxyDims = useRef({ gx: 0, gy: 0, gR: 0 });
+  const fgStarsRef = useRef<FGStar[]>([]);
+
+  const initFGStars = useCallback((w: number, h: number) => {
+    const fg: FGStar[] = [];
+    for (let i = 0; i < FG_STAR_COUNT; i++) {
+      // Place foreground stars in visually pleasing spots (not too clustered)
+      const zone = i % 4;
+      const zones = [
+        { x: 0.1, xr: 0.35, y: 0.05, yr: 0.3 },
+        { x: 0.5, xr: 0.3, y: 0.1, yr: 0.35 },
+        { x: 0.7, xr: 0.2, y: 0.5, yr: 0.35 },
+        { x: 0.15, xr: 0.25, y: 0.55, yr: 0.35 },
+      ];
+      const z = zones[zone];
+      fg.push({
+        x: (z.x + Math.random() * z.xr) * w,
+        y: (z.y + Math.random() * z.yr) * h,
+        r: 6 + Math.random() * 28,  // large → out of focus look
+        opacity: 0.04 + Math.random() * 0.06,
+        hue: Math.random() > 0.6 ? 30 + Math.random() * 20 : 200 + Math.random() * 120,
+      });
+    }
+    fgStarsRef.current = fg;
+  }, []);
 
   const initStars = useCallback((w: number, h: number) => {
     const stars: Star[] = [];
@@ -84,6 +111,7 @@ export function Starfield() {
       canvas.width = w;
       canvas.height = h;
       initStars(w, h);
+      initFGStars(w, h);
     };
 
     resize();
@@ -422,8 +450,70 @@ export function Starfield() {
         ctx.arc(sx, sy, star.r * 0.5, 0, Math.PI * 2);
         ctx.fill();
 
+        // Diffraction spike on brightest near-layer stars
+        if (star.layer === 2 && star.r > 1.2 && star.opacity > 0.7) {
+          const spikeAlpha = finalOpacity * 0.35;
+          ctx.globalAlpha = spikeAlpha;
+          ctx.strokeStyle = `hsla(${star.hue}, 30%, 85%, 1)`;
+          ctx.lineWidth = 0.5;
+          const spikeLen = star.r * 4;
+          for (let d = 0; d < 4; d++) {
+            const da = (d / 4) * Math.PI + Math.PI / 4;
+            ctx.beginPath();
+            ctx.moveTo(sx + Math.cos(da) * star.r, sy + Math.sin(da) * star.r);
+            ctx.lineTo(sx + Math.cos(da) * spikeLen, sy + Math.sin(da) * spikeLen);
+            ctx.stroke();
+          }
+        }
+
         ctx.restore();
       });
+
+      // Foreground "out of focus" cinematic stars (large, blurry, slow parallax)
+      {
+        const fgStars = fgStarsRef.current;
+        for (let f = 0; f < fgStars.length; f++) {
+          const fs = fgStars[f];
+          const fpx = (mx - 0.5) * fs.r * 0.3;
+          const fpy = (my - 0.5) * fs.r * 0.3;
+          const fx = fs.x + fpx;
+          const fy = fs.y + fpy;
+
+          const twinkle = 0.5 + 0.5 * Math.sin(time * 0.0005 + f * 0.7);
+          const fAlpha = fs.opacity * (0.6 + 0.4 * twinkle);
+
+          ctx.save();
+          ctx.globalAlpha = fAlpha;
+          const fGrad = ctx.createRadialGradient(fx, fy, 0, fx, fy, fs.r);
+          fGrad.addColorStop(0, `hsla(${fs.hue}, 50%, 80%, 0.6)`);
+          fGrad.addColorStop(0.15, `hsla(${fs.hue}, 40%, 65%, 0.3)`);
+          fGrad.addColorStop(0.5, `hsla(${fs.hue}, 30%, 50%, 0.06)`);
+          fGrad.addColorStop(1, 'rgba(0,0,0,0)');
+          ctx.fillStyle = fGrad;
+          ctx.beginPath();
+          ctx.arc(fx, fy, fs.r, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+        }
+      }
+
+      // Global warm cinematic tint overlay — subtle amber wash
+      {
+        const tintAlpha = 0.025 + 0.008 * Math.sin(time * 0.0001);
+        ctx.save();
+        ctx.globalAlpha = tintAlpha;
+        const tintGrad = ctx.createRadialGradient(
+          w * 0.35, h * 0.45, Math.min(w, h) * 0.15,
+          w * 0.35, h * 0.45, Math.max(w, h) * 0.9
+        );
+        tintGrad.addColorStop(0, 'rgba(255, 180, 80, 0.5)');
+        tintGrad.addColorStop(0.35, 'rgba(200, 120, 50, 0.2)');
+        tintGrad.addColorStop(0.7, 'rgba(80, 30, 20, 0.05)');
+        tintGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+        ctx.fillStyle = tintGrad;
+        ctx.fillRect(0, 0, w, h);
+        ctx.restore();
+      }
 
       // Shooting stars
       if (time - lastShootingStarRef.current > SHOOTING_STAR_INTERVAL + Math.random() * 7000) {
@@ -492,7 +582,7 @@ export function Starfield() {
       window.removeEventListener('mousemove', handleMouse);
       galaxyTexRef.current = null;
     };
-  }, [initStars, spawnShootingStar]);
+  }, [initStars, spawnShootingStar, initFGStars]);
 
   return (
     <canvas
