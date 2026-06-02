@@ -4,9 +4,7 @@ import { useProgress } from '../../hooks/useProgress';
 import { loadChapter } from '../../data/loadChapter';
 import { extractStudyTrees, extractAchievements } from '../../data/extractTools';
 
-interface SidebarProps {
-  onOpenTool: () => void;
-}
+interface SidebarProps {}
 
 type SidebarChapter = {
   id: number;
@@ -87,7 +85,7 @@ function cleanTitle(title: string) {
   return title.replace(/^[一二三四五六七八九十\d]+[、.\s-]*/, '');
 }
 
-export function Sidebar({ onOpenTool }: SidebarProps) {
+export function Sidebar({}: SidebarProps) {
   const location = useLocation();
   const { getStatus } = useProgress();
   const [collapsed, setCollapsed] = useState(() => window.innerWidth < 1024);
@@ -362,13 +360,12 @@ export function Sidebar({ onOpenTool }: SidebarProps) {
           )}
         </nav>
 
-        {/* Tool panels — study trees & achievements (open in modal) */}
+        {/* Tool panels — study trees & achievements (navigate to full pages) */}
         {!collapsed && (
           <div className="guide-sidebar-tool-panels">
-            {/* Study Trees — opens modal */}
-            <button
-              type="button"
-              onClick={onOpenTool}
+            {/* Study Trees — full page */}
+            <Link
+              to="/tools/study-trees"
               className="guide-sidebar-tool-opener"
             >
               <span className="guide-sidebar-tool-opener-icon">
@@ -381,12 +378,11 @@ export function Sidebar({ onOpenTool }: SidebarProps) {
               <svg className="guide-sidebar-tool-opener-arrow" width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5">
                 <path d="M2 6h8M6 2l4 4-4 4" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
-            </button>
+            </Link>
 
-            {/* Achievements — opens modal */}
-            <button
-              type="button"
-              onClick={onOpenTool}
+            {/* Achievements — full page */}
+            <Link
+              to="/tools/achievements"
               className="guide-sidebar-tool-opener"
             >
               <span className="guide-sidebar-tool-opener-icon">
@@ -399,7 +395,7 @@ export function Sidebar({ onOpenTool }: SidebarProps) {
               <svg className="guide-sidebar-tool-opener-arrow" width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5">
                 <path d="M2 6h8M6 2l4 4-4 4" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
-            </button>
+            </Link>
           </div>
         )}
 

@@ -60,6 +60,12 @@ export function Starfield() {
   // Third offscreen nebula — electric blue cosmic cloud
   const nebula3TexRef = useRef<HTMLCanvasElement | null>(null);
   const nebula3Dims = useRef({ gx: 0, gy: 0, gR: 0 });
+  // Fourth offscreen nebula — emerald green / teal cosmic cloud
+  const nebula4TexRef = useRef<HTMLCanvasElement | null>(null);
+  const nebula4Dims = useRef({ gx: 0, gy: 0, gR: 0 });
+  // Spiral galaxy — Andromeda analog
+  const spiralGalaxyTexRef = useRef<HTMLCanvasElement | null>(null);
+  const spiralGalaxyDims = useRef({ gx: 0, gy: 0, gR: 0 });
   const fgStarsRef = useRef<FGStar[]>([]);
 
   const initFGStars = useCallback((w: number, h: number) => {
@@ -580,6 +586,247 @@ export function Starfield() {
     };
     buildNebula3Texture();
 
+    /** Build fourth nebula — emerald green / teal cosmic cloud */
+    const buildNebula4Texture = () => {
+      const gx = w * 0.72;
+      const gy = h * 0.75;
+      const gR = Math.min(w, h) * 0.18;
+      nebula4Dims.current = { gx, gy, gR };
+
+      const size = Math.ceil(gR * 2.6);
+      const off = document.createElement('canvas');
+      off.width = size;
+      off.height = size;
+      const o = off.getContext('2d')!;
+      const cx = size / 2;
+      const cy = size / 2;
+
+      // Outer halo — teal/emerald
+      const outer = o.createRadialGradient(cx, cy, gR * 0.1, cx, cy, gR * 1.25);
+      outer.addColorStop(0, 'rgba(20, 160, 140, 0.04)');
+      outer.addColorStop(0.3, 'rgba(30, 180, 150, 0.06)');
+      outer.addColorStop(0.6, 'rgba(15, 120, 100, 0.035)');
+      outer.addColorStop(1, 'rgba(0,0,0,0)');
+      o.fillStyle = outer;
+      o.arc(cx, cy, gR * 1.25, 0, Math.PI * 2);
+      o.fill();
+
+      // Emerald green gas blobs
+      const greenBlobs = [
+        { x: -0.08, y: -0.05, r: 0.55, a: 0.06 },
+        { x: 0.12, y: -0.08, r: 0.48, a: 0.05 },
+        { x: -0.15, y: 0.1, r: 0.42, a: 0.04 },
+        { x: 0.08, y: 0.15, r: 0.38, a: 0.035 },
+        { x: -0.03, y: 0.2, r: 0.32, a: 0.028 },
+        { x: 0.18, y: -0.12, r: 0.35, a: 0.03 },
+      ];
+      for (const gb of greenBlobs) {
+        const bx = cx + gb.x * gR;
+        const by = cy + gb.y * gR;
+        const br = gb.r * gR;
+        const grad = o.createRadialGradient(bx, by, 0, bx, by, br);
+        grad.addColorStop(0, `rgba(40, 180, 130, ${gb.a})`);
+        grad.addColorStop(0.3, `rgba(30, 150, 110, ${gb.a * 0.7})`);
+        grad.addColorStop(0.6, `rgba(20, 100, 80, ${gb.a * 0.3})`);
+        grad.addColorStop(1, 'rgba(0,0,0,0)');
+        o.fillStyle = grad;
+        o.beginPath(); o.arc(bx, by, br, 0, Math.PI * 2); o.fill();
+      }
+
+      // Golden accent spots
+      const goldBlobs = [
+        { x: -0.12, y: -0.18, r: 0.18, a: 0.025 },
+        { x: 0.15, y: 0.05, r: 0.16, a: 0.02 },
+      ];
+      for (const wb of goldBlobs) {
+        const bx = cx + wb.x * gR;
+        const by = cy + wb.y * gR;
+        const br = wb.r * gR;
+        const wGrad = o.createRadialGradient(bx, by, 0, bx, by, br);
+        wGrad.addColorStop(0, `rgba(200, 220, 180, ${wb.a * 1.3})`);
+        wGrad.addColorStop(0.4, `rgba(160, 200, 140, ${wb.a * 0.7})`);
+        wGrad.addColorStop(1, 'rgba(0,0,0,0)');
+        o.fillStyle = wGrad;
+        o.beginPath(); o.arc(bx, by, br, 0, Math.PI * 2); o.fill();
+      }
+
+      // Bright center star
+      const centerGrad = o.createRadialGradient(cx, cy - gR * 0.02, 0, cx, cy - gR * 0.02, gR * 0.07);
+      centerGrad.addColorStop(0, 'rgba(200, 250, 220, 0.35)');
+      centerGrad.addColorStop(0.15, 'rgba(140, 220, 180, 0.15)');
+      centerGrad.addColorStop(0.45, 'rgba(60, 160, 120, 0.04)');
+      centerGrad.addColorStop(1, 'rgba(0,0,0,0)');
+      o.fillStyle = centerGrad;
+      o.beginPath(); o.arc(cx, cy - gR * 0.02, gR * 0.07, 0, Math.PI * 2); o.fill();
+
+      // Diffraction
+      o.save();
+      o.translate(cx, cy - gR * 0.02);
+      o.globalAlpha = 0.07;
+      for (let s = 0; s < 4; s++) {
+        const sa = (s / 4) * Math.PI * 2 + 0.35;
+        const sLen = gR * 0.05;
+        const sg = o.createLinearGradient(0, 0, Math.cos(sa) * sLen, Math.sin(sa) * sLen);
+        sg.addColorStop(0, 'rgba(220, 255, 240, 0.5)');
+        sg.addColorStop(1, 'rgba(0,0,0,0)');
+        o.fillStyle = sg;
+        o.beginPath();
+        o.moveTo(Math.cos(sa - 0.05) * gR * 0.004, Math.sin(sa - 0.05) * gR * 0.004);
+        o.lineTo(Math.cos(sa) * sLen, Math.sin(sa) * sLen);
+        o.lineTo(Math.cos(sa + 0.05) * gR * 0.004, Math.sin(sa + 0.05) * gR * 0.004);
+        o.fill();
+      }
+      o.restore();
+
+      // Wisps
+      for (let w = 0; w < 25; w++) {
+        const angle = Math.random() * Math.PI * 2;
+        const dist = gR * (0.05 + Math.random() * 0.5);
+        const wx = cx + Math.cos(angle) * dist;
+        const wy = cy + Math.sin(angle) * dist;
+        const wLen = gR * (0.03 + Math.random() * 0.07);
+        o.save();
+        o.translate(wx, wy);
+        o.rotate(angle + (Math.random() - 0.5) * 1);
+        const wGrad = o.createLinearGradient(0, 0, wLen, 0);
+        const wAlpha = 0.004 + Math.random() * 0.01;
+        wGrad.addColorStop(0, `rgba(80, 200, 150, ${wAlpha})`);
+        wGrad.addColorStop(1, 'rgba(0,0,0,0)');
+        o.fillStyle = wGrad;
+        o.fillRect(0, -0.5, wLen, 1);
+        o.restore();
+      }
+
+      o.globalAlpha = 1;
+      nebula4TexRef.current = off;
+    };
+    buildNebula4Texture();
+
+    /** Build spiral galaxy — Andromeda analog */
+    const buildSpiralGalaxy = () => {
+      const gx = w * 0.48;
+      const gy = h * 0.82;
+      const gR = Math.min(w, h) * 0.25;
+      spiralGalaxyDims.current = { gx, gy, gR };
+
+      const size = Math.ceil(gR * 3);
+      const off = document.createElement('canvas');
+      off.width = size;
+      off.height = size;
+      const o = off.getContext('2d')!;
+      const cx = size / 2;
+      const cy = size / 2;
+
+      // Outer halo — warm elliptical glow
+      const haloGrad = o.createRadialGradient(cx, cy, gR * 0.45, cx, cy, gR * 1.4);
+      haloGrad.addColorStop(0, 'rgba(180, 160, 100, 0.03)');
+      haloGrad.addColorStop(0.35, 'rgba(140, 120, 80, 0.05)');
+      haloGrad.addColorStop(0.65, 'rgba(100, 80, 50, 0.03)');
+      haloGrad.addColorStop(1, 'rgba(0,0,0,0)');
+      o.fillStyle = haloGrad;
+      o.beginPath(); o.ellipse(cx, cy, gR * 1.4, gR * 0.65, -0.3, 0, Math.PI * 2); o.fill();
+
+      // Central bulge — bright core
+      const bulgeGrad = o.createRadialGradient(cx, cy, 0, cx, cy, gR * 0.4);
+      bulgeGrad.addColorStop(0, 'rgba(255, 240, 200, 0.15)');
+      bulgeGrad.addColorStop(0.15, 'rgba(240, 210, 160, 0.08)');
+      bulgeGrad.addColorStop(0.4, 'rgba(200, 170, 120, 0.03)');
+      bulgeGrad.addColorStop(0.7, 'rgba(140, 100, 60, 0.01)');
+      bulgeGrad.addColorStop(1, 'rgba(0,0,0,0)');
+      o.fillStyle = bulgeGrad;
+      o.beginPath(); o.arc(cx, cy, gR * 0.4, 0, Math.PI * 2); o.fill();
+
+      // Core bright point
+      const coreGrad = o.createRadialGradient(cx, cy, 0, cx, cy, gR * 0.08);
+      coreGrad.addColorStop(0, 'rgba(255, 250, 235, 0.25)');
+      coreGrad.addColorStop(0.3, 'rgba(230, 210, 170, 0.1)');
+      coreGrad.addColorStop(0.7, 'rgba(180, 150, 100, 0.02)');
+      coreGrad.addColorStop(1, 'rgba(0,0,0,0)');
+      o.fillStyle = coreGrad;
+      o.beginPath(); o.arc(cx, cy, gR * 0.08, 0, Math.PI * 2); o.fill();
+
+      // Spiral arms — logarithmic spiral
+      const numArms = 4;
+      const totalSteps = 280;
+      const rotation = -0.35; // tilt angle
+      for (let arm = 0; arm < numArms; arm++) {
+        const armOffset = (arm / numArms) * Math.PI * 2;
+        o.save();
+        o.translate(cx, cy);
+        o.rotate(rotation);
+
+        for (let step = 0; step < totalSteps; step++) {
+          const t = step / totalSteps;
+          const r = gR * (0.04 + t * 0.85); // distance from center
+          const angle = armOffset + t * Math.PI * 2.3; // logarithmic wind
+          const x = Math.cos(angle) * r;
+          const y = Math.sin(angle) * r * 0.35; // flatten to create disk perspective
+
+          // Arm gets thinner and fades with distance
+          const armWidth = gR * 0.03 * (1 - t * 0.7);
+          const alpha = 0.04 * (1 - t * 0.8) * (0.5 + 0.5 * arm % 2);
+
+          const dotGrad = o.createRadialGradient(x, y, 0, x, y, armWidth);
+          // Blueish tint for arms, warmer near core
+          const rTint = 140 + t * 60;
+          const gTint = 130 + t * 30;
+          const bTint = 170 - t * 70;
+          dotGrad.addColorStop(0, `rgba(${rTint},${gTint},${bTint},${alpha})`);
+          dotGrad.addColorStop(0.5, `rgba(${rTint * 0.7},${gTint * 0.7},${bTint * 0.7},${alpha * 0.4})`);
+          dotGrad.addColorStop(1, 'rgba(0,0,0,0)');
+          o.fillStyle = dotGrad;
+          o.beginPath(); o.arc(x, y, armWidth, 0, Math.PI * 2); o.fill();
+        }
+        o.restore();
+      }
+
+      // Dust lanes between arms (thin dark streaks)
+      for (let arm = 0; arm < numArms; arm++) {
+        const armOffset = (arm / numArms) * Math.PI * 2 + Math.PI / numArms;
+        o.save();
+        o.translate(cx, cy);
+        o.rotate(rotation);
+
+        for (let step = 0; step < 150; step++) {
+          const t = step / 150;
+          const r = gR * (0.1 + t * 0.7);
+          const angle = armOffset + t * Math.PI * 2.3;
+          const x = Math.cos(angle) * r;
+          const y = Math.sin(angle) * r * 0.35;
+
+          const dustAlpha = 0.015 * (1 - t);
+          o.globalAlpha = dustAlpha;
+          o.fillStyle = 'rgba(4, 3, 8, 1)';
+          o.beginPath(); o.arc(x, y, gR * 0.015, 0, Math.PI * 2); o.fill();
+        }
+        o.restore();
+      }
+      o.globalAlpha = 1;
+
+      // Scattered star dots in disk
+      for (let i = 0; i < 200; i++) {
+        const r = gR * (0.05 + Math.random() * 0.85);
+        const angle = Math.random() * Math.PI * 2;
+        o.save();
+        o.translate(cx, cy);
+        o.rotate(rotation);
+        const x = Math.cos(angle) * r;
+        const y = Math.sin(angle) * r * 0.35;
+        o.restore();
+
+        const dotAlpha = 0.008 + Math.random() * 0.015;
+        const starGrad = o.createRadialGradient(cx + x, cy + y, 0, cx + x, cy + y, 1.5);
+        starGrad.addColorStop(0, `rgba(220, 210, 180, ${dotAlpha * 2})`);
+        starGrad.addColorStop(1, 'rgba(0,0,0,0)');
+        o.fillStyle = starGrad;
+        o.beginPath(); o.arc(cx + x, cy + y, 1.5, 0, Math.PI * 2); o.fill();
+      }
+
+      o.globalAlpha = 1;
+      spiralGalaxyTexRef.current = off;
+    };
+    buildSpiralGalaxy();
+
     const handleMouse = (e: MouseEvent) => {
       mouseRef.current = { x: e.clientX / w, y: e.clientY / h };
     };
@@ -650,6 +897,44 @@ export function Starfield() {
 
           ctx.save();
           ctx.globalAlpha = breathe * 0.75;
+          ctx.drawImage(tex, gx - texSize / 2 + swayX, gy - texSize / 2 + swayY, texSize, texSize);
+          ctx.restore();
+        }
+      }
+
+      // ═══════════════════════════════════════════
+      // NEBULA 4 — Emerald green / teal cosmic cloud
+      // ═══════════════════════════════════════════
+      {
+        const tex = nebula4TexRef.current;
+        const { gx, gy, gR } = nebula4Dims.current;
+        if (tex && gR > 0) {
+          const texSize = tex.width;
+          const breathe = 1 + 0.07 * Math.sin(time * 0.00025);
+          const swayX = Math.sin(time * 0.00014) * gR * 0.015;
+          const swayY = Math.cos(time * 0.00008) * gR * 0.018;
+
+          ctx.save();
+          ctx.globalAlpha = breathe * 0.7;
+          ctx.drawImage(tex, gx - texSize / 2 + swayX, gy - texSize / 2 + swayY, texSize, texSize);
+          ctx.restore();
+        }
+      }
+
+      // ═══════════════════════════════════════════
+      // SPIRAL GALAXY — Andromeda analog
+      // ═══════════════════════════════════════════
+      {
+        const tex = spiralGalaxyTexRef.current;
+        const { gx, gy, gR } = spiralGalaxyDims.current;
+        if (tex && gR > 0) {
+          const texSize = tex.width;
+          const breathe = 1 + 0.04 * Math.sin(time * 0.0001);
+          const swayX = Math.sin(time * 0.00006) * gR * 0.01;
+          const swayY = Math.cos(time * 0.00008) * gR * 0.012;
+
+          ctx.save();
+          ctx.globalAlpha = breathe * 0.65;
           ctx.drawImage(tex, gx - texSize / 2 + swayX, gy - texSize / 2 + swayY, texSize, texSize);
           ctx.restore();
         }
@@ -1050,6 +1335,8 @@ export function Starfield() {
       galaxyTexRef.current = null;
       nebula2TexRef.current = null;
       nebula3TexRef.current = null;
+      nebula4TexRef.current = null;
+      spiralGalaxyTexRef.current = null;
     };
   }, [initStars, spawnShootingStar, initFGStars]);
 

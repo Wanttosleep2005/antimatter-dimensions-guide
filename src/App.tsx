@@ -2,17 +2,17 @@ import { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, useLocation, useNavigate } from 'react-router-dom';
 import { Layout } from './components/layout/Layout';
 import { SearchModal } from './components/search/SearchModal';
-import { ToolModal } from './components/tool/ToolModal';
 import { SplashPage } from './pages/SplashPage';
 import { HomePage } from './pages/HomePage';
 import { ChapterPage } from './pages/ChapterPage';
 import { GlossaryPage } from './pages/GlossaryPage';
+import { StudyTreesPage } from './pages/StudyTreesPage';
+import { AchievementsPage } from './pages/AchievementsPage';
 import { useProgress } from './hooks/useProgress';
 import { chapterIndex } from './data/loadChapter';
 
 function AppRoutes() {
   const [searchOpen, setSearchOpen] = useState(false);
-  const [toolOpen, setToolOpen] = useState(false);
   const [splashDone, setSplashDone] = useState(() => {
     return sessionStorage.getItem('ad-splash') === 'done';
   });
@@ -108,7 +108,6 @@ function AppRoutes() {
     <>
       <Layout
         onOpenSearch={() => setSearchOpen(true)}
-        onOpenTool={() => setToolOpen(true)}
       >
         <Routes>
           <Route
@@ -120,10 +119,11 @@ function AppRoutes() {
             element={<ChapterPage onStatusChange={setChapterStatus} getStatus={getStatus} fontSize={fontSize} onFontSizeChange={setFontSize} />}
           />
           <Route path="/glossary" element={<GlossaryPage />} />
+          <Route path="/tools/study-trees" element={<StudyTreesPage />} />
+          <Route path="/tools/achievements" element={<AchievementsPage />} />
         </Routes>
       </Layout>
       <SearchModal isOpen={searchOpen} onClose={() => setSearchOpen(false)} />
-      <ToolModal isOpen={toolOpen} onClose={() => setToolOpen(false)} />
     </>
   );
 }
