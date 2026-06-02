@@ -1,8 +1,13 @@
 import { useRef, useEffect } from 'react';
 
+interface GravWave {
+  startTime: number;
+  speed: number;
+  opacity: number;
+}
+
 /**
- * Canvas-based black hole with accretion disk, photon ring, and particle jets.
- * Rendered as a fixed background element with low opacity.
+ * Canvas-based black hole with accretion disk, photon ring, particle jets and gravitational waves.
  */
 export function BlackHole() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -35,9 +40,32 @@ export function BlackHole() {
       radius: Math.min(w, h) * 0.22,
     };
 
-    const animate = () => {
+    // Gravitational wave rings
+    const gravWaves: GravWave[] = [];
+    const GRAV_WAVE_INTERVAL = 3200;
+    const GRAV_WAVE_MAX_LIFE = 7000;
+    let lastWaveTime = 0;
+
+    const animate = (timestamp: number) => {
       angle += 0.0008;
       ctx.clearRect(0, 0, w, h);
+
+      // ---- 0. Spawn gravitational waves ----
+      if (timestamp - lastWaveTime > GRAV_WAVE_INTERVAL) {
+        gravWaves.push({
+          startTime: timestamp,
+          speed: 0.35 + Math.random() * 0.25,
+          opacity: 0.06 + Math.random() * 0.04,
+        });
+        lastWaveTime = timestamp;
+      }
+
+      // Remove expired waves
+      for (let i = gravWaves.length - 1; i >= 0; i--) {
+        if (timestamp - gravWaves[i].startTime > GRAV_WAVE_MAX_LIFE) {
+          gravWaves.splice(i, 1);
+        }
+      }
 
       // ---- 1. Outer glow (gravitational lensing halo) ----
       const outerGlow = ctx.createRadialGradient(bh.cx, bh.cy, bh.radius * 0.55, bh.cx, bh.cy, bh.radius * 2.8);
@@ -138,6 +166,58 @@ export function BlackHole() {
         ctx.beginPath();
         ctx.arc(sx, sy, 1.2, 0, Math.PI * 2);
         ctx.fill();
+      }
+
+      // ---- 7. Gravitational waves — expanding ring ripples ----
+      for (const wave of gravWaves) {
+        const elapsed = timestamp - wave.startTime;
+        const progress = elapsed / GRAV_WAVE_MAX_LIFE;
+        const radius = bh.radius * (0.6 + progress * 4.5);
+        const alpha = wave.opacity * (1 - progress) * (1 - progress); // quadratic fade
+
+        if (alpha < 0.003) continue;
+
+        // Main ring
+        ctx.save();
+        ctx.globalAlpha = alpha;
+        const waveGrad = ctx.createRadialGradient(
+          bh.cx, bh.cy, radius - bh.radius * 0.06,
+          bh.cx, bh.cy, radius + bh.radius * 0.08
+        );
+        waveGrad.addColorStop(0, 'rgba(130, 100, 220, 0)');
+        waveGrad.addColorStop(0.35, `rgba(140, 110, 230, ${alpha * 6})`);
+        waveGrad.addColorStop(0.5, `rgba(160, 130, 240, ${alpha * 10})`);
+        waveGrad.addColorStop(0.65, `rgba(140, 110, 230, ${alpha * 6})`);
+        waveGrad.addColorStop(1, 'rgba(100, 80, 200, 0)');
+
+        ctx.fillStyle = waveGrad;
+        ctx.beginPath();
+        ctx.arc(bh.cx, bh.cy, radius + bh.radius * 0.08, 0, Math.PI * 2);
+        ctx.arc(bh.cx, bh.cy, radius - bh.radius * 0.06, 0, Math.PI * 2, true);
+        ctx.fill();
+
+        // Secondary echo ring (slightly behind, dimmer)
+        if (progress > 0.08) {
+          const echoRadius = bh.radius * (0.6 + (progress - 0.08) * 4.5);
+          const echoAlpha = wave.opacity * 0.4 * (1 - progress) * (1 - progress);
+          if (echoAlpha > 0.002) {
+            ctx.globalAlpha = echoAlpha;
+            const echoGrad = ctx.createRadialGradient(
+              bh.cx, bh.cy, echoRadius - bh.radius * 0.03,
+              bh.cx, bh.cy, echoRadius + bh.radius * 0.04
+            );
+            echoGrad.addColorStop(0, 'rgba(100, 150, 220, 0)');
+            echoGrad.addColorStop(0.5, `rgba(120, 160, 230, ${echoAlpha * 12})`);
+            echoGrad.addColorStop(1, 'rgba(80, 120, 200, 0)');
+
+            ctx.fillStyle = echoGrad;
+            ctx.beginPath();
+            ctx.arc(bh.cx, bh.cy, echoRadius + bh.radius * 0.04, 0, Math.PI * 2);
+            ctx.arc(bh.cx, bh.cy, echoRadius - bh.radius * 0.03, 0, Math.PI * 2, true);
+            ctx.fill();
+          }
+        }
+        ctx.restore();
       }
 
       ctx.globalAlpha = 1;
