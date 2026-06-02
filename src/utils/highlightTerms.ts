@@ -40,6 +40,8 @@ const guildTermDefs: Record<string, string> = {
   DR: '复兴树节点 — 现实/膨胀相关',
   DAU: '复兴树节点 — 膨胀升级自动化',
   CYER: '复兴树节点 — 天界/现实阶段',
+  EU1: '复兴树节点 — 永恒升级相关',
+  EU2: '复兴树节点 — 永恒升级相关',
 };
 
 // Game term regex — multi-letter terms only (single letters handled by rune processing)
@@ -152,7 +154,8 @@ function getGameTermTip(term: string): string | null {
   if (/^DU\d+$/.test(term)) return `膨胀升级 ${term} — Dilation Upgrade`;
   if (/^IU\d+$/.test(term)) return `虚幻升级 ${term} — Imaginary Upgrade`;
   if (/^PU\d+$/.test(term)) return `佩勒升级 ${term} — Pelle Upgrade`;
-  if (/^EU\d+$/.test(term)) return `永恒升级 ${term} — Eternity Upgrade`;
+  // EU1/2 are perk (复兴) nodes, not eternity upgrades
+  if (/^EU\d+$/.test(term)) return `复兴节点 ${term} — Perk Tree Node`;
   if (/^TS\d+$/.test(term)) return `时间研究 ${term} — Time Study`;
   if (/^TD\d+$/.test(term)) return `时间维度 ${term} — Time Dimension`;
   if (/^ID\d+$/.test(term)) return `无限维度 ${term} — Infinity Dimension`;

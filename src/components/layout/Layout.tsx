@@ -8,12 +8,13 @@ interface LayoutProps {
   children: ReactNode;
   onOpenSearch: () => void;
   getStatus: (id: number) => 'not-started' | 'in-progress' | 'completed';
+  perfMode?: 'low' | 'normal';
 }
 
-export function Layout({ children, onOpenSearch, getStatus }: LayoutProps) {
+export function Layout({ children, onOpenSearch, getStatus, perfMode }: LayoutProps) {
   return (
     <div className="min-h-screen bg-[var(--bg-primary)] relative overflow-x-hidden w-full max-w-full">
-      <Starfield />
+      <Starfield perfMode={perfMode} />
       <BlackHole />
       <Sidebar getStatus={getStatus} />
       <div className="lg:ml-[var(--sidebar-width)] transition-[margin] duration-300 relative z-[1]">

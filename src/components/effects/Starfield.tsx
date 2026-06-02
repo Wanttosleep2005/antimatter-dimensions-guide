@@ -40,10 +40,15 @@ interface QuantumFlash {
 
 const STAR_COUNTS = [160, 90, 45];
 const STAR_SPEEDS = [0.06, 0.15, 0.30];
-const SHOOTING_STAR_INTERVAL = 2500; // more frequent
-const FG_STAR_COUNT = 28; // more foreground bloom stars for cinematic depth
+const SHOOTING_STAR_INTERVAL = 2500;
+const FG_STAR_COUNT = 28;
 
-export function Starfield() {
+// Low-perf mode reductions
+const STAR_COUNTS_LOW = [60, 35, 18];
+const FG_STAR_COUNT_LOW = 10;
+const SHOOTING_STAR_INTERVAL_LOW = 6000;
+
+export function Starfield({ perfMode }: { perfMode?: 'low' | 'normal' }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const starsRef = useRef<Star[]>([]);
   const shootingStarsRef = useRef<ShootingStar[]>([]);
@@ -51,6 +56,7 @@ export function Starfield() {
   const rafRef = useRef<number>(0);
   const lastShootingStarRef = useRef(0);
   const mouseRef = useRef({ x: 0.5, y: 0.5 });
+  const isLowPerf = perfMode === 'low';
   // Offscreen Carina Nebula texture
   const galaxyTexRef = useRef<HTMLCanvasElement | null>(null);
   const galaxyDims = useRef({ gx: 0, gy: 0, gR: 0 });
@@ -70,7 +76,8 @@ export function Starfield() {
 
   const initFGStars = useCallback((w: number, h: number) => {
     const fg: FGStar[] = [];
-    for (let i = 0; i < FG_STAR_COUNT; i++) {
+    const count = isLowPerf ? FG_STAR_COUNT_LOW : FG_STAR_COUNT;
+    for (let i = 0; i < count; i++) {
       const zone = i % 6;
       const zones = [
         { x: 0.05, xr: 0.35, y: 0.02, yr: 0.28 },
@@ -93,8 +100,9 @@ export function Starfield() {
   }, []);
 
   const initStars = useCallback((w: number, h: number) => {
+    const counts = isLowPerf ? STAR_COUNTS_LOW : STAR_COUNTS;
     const stars: Star[] = [];
-    STAR_COUNTS.forEach((count, layer) => {
+    counts.forEach((count, layer) => {
       for (let i = 0; i < count; i++) {
         const sx = Math.random() * w;
         const sy = Math.random() * h;
@@ -845,10 +853,10 @@ export function Starfield() {
 
       ctx.clearRect(0, 0, w, h);
 
-      // ═══════════════════════════════════════════
-      // CARINA NEBULA — pre-rendered texture, gentle sway
-      // ═══════════════════════════════════════════
-      {
+      // ── Skip premium nebulae in low-perf mode ──
+      if (!isLowPerf) {
+        // ═══ CARINA NEBULA ═══
+        {
         const tex = galaxyTexRef.current;
         const { gx, gy, gR } = galaxyDims.current;
         if (tex && gR > 0) {
@@ -996,6 +1004,7 @@ export function Starfield() {
         });
         ctx.restore();
       }
+      } // end if (!isLowPerf)
 
       // Stars with parallax, hue, and BLACK HOLE GRAVITY
       // Black hole parameters (must match BlackHole.tsx)
@@ -1268,7 +1277,8 @@ export function Starfield() {
       }
 
       // Shooting stars
-      if (time - lastShootingStarRef.current > SHOOTING_STAR_INTERVAL + Math.random() * 7000) {
+      const interval = isLowPerf ? SHOOTING_STAR_INTERVAL_LOW : SHOOTING_STAR_INTERVAL;
+      if (time - lastShootingStarRef.current > interval + Math.random() * 7000) {
         spawnShootingStar(w, h);
         lastShootingStarRef.current = time;
       }

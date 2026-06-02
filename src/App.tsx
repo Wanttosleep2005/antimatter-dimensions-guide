@@ -9,6 +9,7 @@ import { GlossaryPage } from './pages/GlossaryPage';
 import { StudyTreesPage } from './pages/StudyTreesPage';
 import { AchievementsPage } from './pages/AchievementsPage';
 import { useProgress } from './hooks/useProgress';
+import { usePerformanceMonitor } from './hooks/usePerformanceMonitor';
 import { chapterIndex } from './data/loadChapter';
 
 function AppRoutes() {
@@ -21,6 +22,7 @@ function AppRoutes() {
     return saved ? parseInt(saved) : 0;
   });
   const { setChapterStatus, getStatus, getCompletionStats } = useProgress();
+  const perfMode = usePerformanceMonitor();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -109,6 +111,7 @@ function AppRoutes() {
       <Layout
         onOpenSearch={() => setSearchOpen(true)}
         getStatus={getStatus}
+        perfMode={perfMode.current}
       >
         <Routes>
           <Route
