@@ -20,72 +20,67 @@ const currencyDefs: Record<string, { label: string; color: string }> = {
 
 // Guild tree node definitions with category colors
 const guildTermDefs: Record<string, { label: string; color: string }> = {
-  // ── Purple: EC / Challenge / Passive / Automation ──
-  ECB:   { label: '复兴树 — 永恒挑战保留', color: '#a855f7' },
-  ECR:   { label: '复兴树 — 永恒挑战相关', color: '#a855f7' },
-  EC1R:  { label: '复兴树 — EC1 相关', color: '#a855f7' },
-  EC2R:  { label: '复兴树 — EC2 相关', color: '#a855f7' },
-  EC3R:  { label: '复兴树 — EC3 相关', color: '#a855f7' },
-  EC5R:  { label: '复兴树 — EC5 相关', color: '#a855f7' },
-  ACT:   { label: '复兴树 — 自动化相关', color: '#a855f7' },
-  PASS:  { label: '复兴树 — 被动路径相关', color: '#a855f7' },
-  IDL:   { label: '复兴树 — 闲置路径相关', color: '#a855f7' },
-  EU1:   { label: '复兴树 — 永恒升级相关', color: '#a855f7' },
-  EU2:   { label: '复兴树 — 永恒升级相关', color: '#a855f7' },
-  SEP1:  { label: '复兴树 — 分离路径 1', color: '#a855f7' },
-  SEP2:  { label: '复兴树 — 分离路径 2', color: '#a855f7' },
-  SEP3:  { label: '复兴树 — 分离路径 3', color: '#a855f7' },
-  ATT:   { label: '复兴树 — 自动化相关', color: '#a855f7' },
-  ATP:   { label: '复兴树 — 自动化相关', color: '#a855f7' },
-
-  // ── Red: Time Study / Theory / Dilation / DAS ──
-  TTS:   { label: '复兴树 — 时间研究相关', color: '#ef4444' },
-  TTF:   { label: '复兴树 — 时间之理相关', color: '#ef4444' },
-  TTM:   { label: '复兴树 — 时间之理相关', color: '#ef4444' },
-  PEC1:  { label: '复兴树 — EC1 前置', color: '#ef4444' },
-  PEC2:  { label: '复兴树 — EC2 前置', color: '#ef4444' },
-  PEC3:  { label: '复兴树 — EC3 前置', color: '#ef4444' },
-  IDAS:  { label: '复兴树 — ID/AD 相关', color: '#ef4444' },
-  REPAS: { label: '复兴树 — 复制相关', color: '#ef4444' },
-  DAU:   { label: '复兴树 — 膨胀升级自动化', color: '#ef4444' },
-  DAB:   { label: '复兴树 — 膨胀/AD 相关', color: '#ef4444' },
-  DAS:   { label: '复兴树 — 膨胀/AD 相关', color: '#ef4444' },
-  TGR:   { label: '复兴树 — 时间膨胀/超光速相关', color: '#ef4444' },
-
-  // ── Yellow/Gold: Achievement nodes ──
-  ACH1:  { label: '复兴树 — 成就 1', color: '#f59e0b' },
-  ACH2:  { label: '复兴树 — 成就 2', color: '#f59e0b' },
-  ACH3:  { label: '复兴树 — 成就 3', color: '#f59e0b' },
-  ACH4:  { label: '复兴树 — 成就 4', color: '#f59e0b' },
-  ACHNR: { label: '复兴树 — 成就保留相关', color: '#f59e0b' },
-
-  // ── Brown: SIP / IDR ──
-  SIP1:  { label: '复兴树 — 奇异研究 1', color: '#a07040' },
-  SIP2:  { label: '复兴树 — 奇异研究 2', color: '#a07040' },
-  IDR:   { label: '复兴树 — ID 相关', color: '#a07040' },
-
-  // ── Other nodes (default accent color) ──
-  START: { label: '复兴树 — 早期现实起始', color: '#22c55e' },
-  SAM:   { label: '复兴树 — SAM 相关', color: '#22c55e' },
-  ANR:   { label: '复兴树 — ANR 相关', color: '#6366f1' },
-  STP:   { label: '复兴树 — STP 相关', color: '#22c55e' },
-  REAL:  { label: '复兴树 — 现实解锁相关', color: '#22c55e' },
-  DILR:  { label: '复兴树 — 膨胀相关保留/自动化', color: '#6366f1' },
-  TP1:   { label: '复兴树 — 超光速 1', color: '#6366f1' },
-  TP2:   { label: '复兴树 — 超光速 2', color: '#6366f1' },
-  TP3:   { label: '复兴树 — 超光速 3', color: '#6366f1' },
-  TP4:   { label: '复兴树 — 超光速 4', color: '#6366f1' },
-  DU1:   { label: '复兴树 — 膨胀升级 1', color: '#6366f1' },
-  DU2:   { label: '复兴树 — 膨胀升级 2', color: '#6366f1' },
-  // Legacy aliases
-  ATD:   { label: '复兴树 — 自动化相关', color: '#a855f7' },
-  CYER:  { label: '复兴树 — 天界/现实阶段', color: '#6366f1' },
+  // ── Purple ──
+  ECB:   { label: '复兴树节点', color: '#a855f7' },
+  ECR:   { label: '复兴树节点', color: '#a855f7' },
+  EC1R:  { label: '复兴树节点', color: '#a855f7' },
+  EC2R:  { label: '复兴树节点', color: '#a855f7' },
+  EC3R:  { label: '复兴树节点', color: '#a855f7' },
+  EC5R:  { label: '复兴树节点', color: '#a855f7' },
+  ACT:   { label: '复兴树节点', color: '#a855f7' },
+  PASS:  { label: '复兴树节点', color: '#a855f7' },
+  IDL:   { label: '复兴树节点', color: '#a855f7' },
+  EU1:   { label: '复兴树节点', color: '#a855f7' },
+  EU2:   { label: '复兴树节点', color: '#a855f7' },
+  SEP1:  { label: '复兴树节点', color: '#a855f7' },
+  SEP2:  { label: '复兴树节点', color: '#a855f7' },
+  SEP3:  { label: '复兴树节点', color: '#a855f7' },
+  ATT:   { label: '复兴树节点', color: '#a855f7' },
+  ATP:   { label: '复兴树节点', color: '#a855f7' },
+  // ── Red ──
+  TTS:   { label: '复兴树节点', color: '#ef4444' },
+  TTF:   { label: '复兴树节点', color: '#ef4444' },
+  TTM:   { label: '复兴树节点', color: '#ef4444' },
+  PEC1:  { label: '复兴树节点', color: '#ef4444' },
+  PEC2:  { label: '复兴树节点', color: '#ef4444' },
+  PEC3:  { label: '复兴树节点', color: '#ef4444' },
+  IDAS:  { label: '复兴树节点', color: '#ef4444' },
+  REPAS: { label: '复兴树节点', color: '#ef4444' },
+  DAU:   { label: '复兴树节点', color: '#ef4444' },
+  DAB:   { label: '复兴树节点', color: '#ef4444' },
+  DAS:   { label: '复兴树节点', color: '#ef4444' },
+  TGR:   { label: '复兴树节点', color: '#ef4444' },
+  // ── Gold ──
+  ACH1:  { label: '复兴树节点', color: '#f59e0b' },
+  ACH2:  { label: '复兴树节点', color: '#f59e0b' },
+  ACH3:  { label: '复兴树节点', color: '#f59e0b' },
+  ACH4:  { label: '复兴树节点', color: '#f59e0b' },
+  ACHNR: { label: '复兴树节点', color: '#f59e0b' },
+  // ── Brown ──
+  SIP1:  { label: '复兴树节点', color: '#a07040' },
+  SIP2:  { label: '复兴树节点', color: '#a07040' },
+  IDR:   { label: '复兴树节点', color: '#a07040' },
+  // ── Green/Indigo ──
+  START: { label: '复兴树节点', color: '#22c55e' },
+  SAM:   { label: '复兴树节点', color: '#22c55e' },
+  ANR:   { label: '复兴树节点', color: '#6366f1' },
+  STP:   { label: '复兴树节点', color: '#22c55e' },
+  REAL:  { label: '复兴树节点', color: '#22c55e' },
+  DILR:  { label: '复兴树节点', color: '#6366f1' },
+  TP1:   { label: '复兴树节点', color: '#6366f1' },
+  TP2:   { label: '复兴树节点', color: '#6366f1' },
+  TP3:   { label: '复兴树节点', color: '#6366f1' },
+  TP4:   { label: '复兴树节点', color: '#6366f1' },
+  DU1:   { label: '复兴树节点', color: '#6366f1' },
+  DU2:   { label: '复兴树节点', color: '#6366f1' },
+  ATD:   { label: '复兴树节点', color: '#a855f7' },
+  CYER:  { label: '复兴树节点', color: '#6366f1' },
 };
 
 // Build dynamic game term regex from guild terms
 const GUILD_TERMS = Object.keys(guildTermDefs).sort((a, b) => b.length - a.length).join('|');
 const GAME_TERM_RE = new RegExp(
-  `\\b(EC\\d+|C\\d+|IC\\d+|IU\\d+|PU\\d+|Cel\\d+|TS\\d+|ID\\d+|r\\d{2,3}|RU\\d+|DU\\d+|EU\\d+|TD\\d+|TP\\d+|ACH\\d+|IM\\d+|${GUILD_TERMS}|AM|IP|EP|TT|DT|RM|IM|RS|TP|TC|AP|RU|PP|AD)\\b`,
+  `\\b(EC\\d+|C\\d+|IC\\d+|IU\\d+|PU\\d+|Cel\\d+|TS\\d+|ID\\d+|r\\d{2,3}|RU\\d+|TD\\d+|TP\\d+|ACH\\d+|IM\\d+|${GUILD_TERMS}|AM|IP|EP|TT|DT|RM|IM|RS|TP|TC|AP|RU|PP|AD)\\b`,
   'g',
 );
 
@@ -191,8 +186,7 @@ function getGameTermTip(term: string): string | null {
   if (/^DU\d+$/.test(term)) return `膨胀升级 ${term} — Dilation Upgrade`;
   if (/^IU\d+$/.test(term)) return `虚幻升级 ${term} — Imaginary Upgrade`;
   if (/^PU\d+$/.test(term)) return `佩勒升级 ${term} — Pelle Upgrade`;
-  // EU1/2 are perk (复兴) nodes, not eternity upgrades
-  if (/^EU\d+$/.test(term)) return `复兴节点 ${term} — Perk Tree Node`;
+  // EU and DU number patterns handled by guildTermDefs (复兴树节点)
   if (/^TS\d+$/.test(term)) return `时间研究 ${term} — Time Study`;
   if (/^TD\d+$/.test(term)) return `时间维度 ${term} — Time Dimension`;
   if (/^ID\d+$/.test(term)) return `无限维度 ${term} — Infinity Dimension`;
