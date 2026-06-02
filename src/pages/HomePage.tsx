@@ -1,6 +1,5 @@
 import { useEffect, useState, useMemo, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useProgress } from '../hooks/useProgress';
 import { chapterIndex, loadChapter } from '../data/loadChapter';
 import { cleanTitle } from '../utils/titleClean';
 import { getBookmarks, type Bookmark } from '../utils/bookmarks';
@@ -55,8 +54,12 @@ function phaseForChapter(chapterId: number) {
   return PHASES.find(phase => chapterId >= phase.range[0] && chapterId <= phase.range[1]) ?? PHASES[0];
 }
 
-export function HomePage({ completed, total, inProgress }: { completed: number; total: number; inProgress: number }) {
-  const { getStatus } = useProgress();
+export function HomePage({ completed, total, inProgress, getStatus }: {
+  completed: number;
+  total: number;
+  inProgress: number;
+  getStatus: (id: number) => 'not-started' | 'in-progress' | 'completed';
+}) {
   const navigate = useNavigate();
   const lastChapter = getLastChapter();
   const [chapters, setChapters] = useState<Chapter[]>([]);
