@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, useLocation, useNavigate } from 'react-router-dom';
 import { Layout } from './components/layout/Layout';
 import { SearchModal } from './components/search/SearchModal';
+import { ToolModal } from './components/tool/ToolModal';
+import { SplashPage } from './pages/SplashPage';
 import { HomePage } from './pages/HomePage';
 import { ChapterPage } from './pages/ChapterPage';
 import { GlossaryPage } from './pages/GlossaryPage';
@@ -10,6 +12,10 @@ import { chapterIndex } from './data/loadChapter';
 
 function AppRoutes() {
   const [searchOpen, setSearchOpen] = useState(false);
+  const [toolOpen, setToolOpen] = useState(false);
+  const [splashDone, setSplashDone] = useState(() => {
+    return sessionStorage.getItem('ad-splash') === 'done';
+  });
   const [fontSize, setFontSize] = useState(() => {
     const saved = localStorage.getItem('ad-guide-fontsize');
     return saved ? parseInt(saved) : 0;
@@ -75,10 +81,34 @@ function AppRoutes() {
 
   const stats = getCompletionStats();
 
+  // Enter key to dismiss splash page
+  useEffect(() => {
+    if (!splashDone) {
+      const handler = (e: KeyboardEvent) => {
+        if (e.key === 'Enter') {
+          sessionStorage.setItem('ad-splash', 'done');
+          setSplashDone(true);
+        }
+      };
+      window.addEventListener('keydown', handler);
+      return () => window.removeEventListener('keydown', handler);
+    }
+  }, [splashDone]);
+
+  const handleEnter = () => {
+    sessionStorage.setItem('ad-splash', 'done');
+    setSplashDone(true);
+  };
+
+  if (!splashDone) {
+    return <SplashPage onEnter={handleEnter} />;
+  }
+
   return (
     <>
       <Layout
         onOpenSearch={() => setSearchOpen(true)}
+        onOpenTool={() => setToolOpen(true)}
       >
         <Routes>
           <Route
@@ -93,6 +123,7 @@ function AppRoutes() {
         </Routes>
       </Layout>
       <SearchModal isOpen={searchOpen} onClose={() => setSearchOpen(false)} />
+      <ToolModal isOpen={toolOpen} onClose={() => setToolOpen(false)} />
     </>
   );
 }

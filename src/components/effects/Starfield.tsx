@@ -23,15 +23,25 @@ interface ShootingStar {
   trail: { x: number; y: number }[];
 }
 
+interface QuantumFlash {
+  x: number;
+  y: number;
+  born: number;
+  maxLife: number;
+  size: number;
+  hue: number;
+}
+
 const STAR_COUNTS = [160, 90, 45];
 const STAR_SPEEDS = [0.06, 0.15, 0.30];
-const SHOOTING_STAR_INTERVAL = 4000;
-const FG_STAR_COUNT = 18; // foreground "out of focus" stars
+const SHOOTING_STAR_INTERVAL = 2500; // more frequent
+const FG_STAR_COUNT = 28; // more foreground bloom stars for cinematic depth
 
 export function Starfield() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const starsRef = useRef<Star[]>([]);
   const shootingStarsRef = useRef<ShootingStar[]>([]);
+  const quantumFlashesRef = useRef<QuantumFlash[]>([]);
   const rafRef = useRef<number>(0);
   const lastShootingStarRef = useRef(0);
   const mouseRef = useRef({ x: 0.5, y: 0.5 });
@@ -43,21 +53,22 @@ export function Starfield() {
   const initFGStars = useCallback((w: number, h: number) => {
     const fg: FGStar[] = [];
     for (let i = 0; i < FG_STAR_COUNT; i++) {
-      // Place foreground stars in visually pleasing spots (not too clustered)
-      const zone = i % 4;
+      const zone = i % 6;
       const zones = [
-        { x: 0.1, xr: 0.35, y: 0.05, yr: 0.3 },
-        { x: 0.5, xr: 0.3, y: 0.1, yr: 0.35 },
-        { x: 0.7, xr: 0.2, y: 0.5, yr: 0.35 },
-        { x: 0.15, xr: 0.25, y: 0.55, yr: 0.35 },
+        { x: 0.05, xr: 0.35, y: 0.02, yr: 0.28 },
+        { x: 0.45, xr: 0.30, y: 0.08, yr: 0.30 },
+        { x: 0.65, xr: 0.25, y: 0.45, yr: 0.35 },
+        { x: 0.10, xr: 0.25, y: 0.50, yr: 0.35 },
+        { x: 0.72, xr: 0.20, y: 0.10, yr: 0.25 },
+        { x: 0.25, xr: 0.30, y: 0.65, yr: 0.30 },
       ];
       const z = zones[zone];
       fg.push({
         x: (z.x + Math.random() * z.xr) * w,
         y: (z.y + Math.random() * z.yr) * h,
-        r: 6 + Math.random() * 28,  // large → out of focus look
-        opacity: 0.04 + Math.random() * 0.06,
-        hue: Math.random() > 0.6 ? 30 + Math.random() * 20 : 200 + Math.random() * 120,
+        r: 10 + Math.random() * 32,  // larger bloom radius
+        opacity: 0.06 + Math.random() * 0.10, // brighter bloom
+        hue: Math.random() > 0.4 ? 30 + Math.random() * 25 : 210 + Math.random() * 140,
       });
     }
     fgStarsRef.current = fg;
@@ -469,29 +480,41 @@ export function Starfield() {
         ctx.restore();
       });
 
-      // Foreground "out of focus" cinematic stars (large, blurry, slow parallax)
+      // Foreground "out of focus" cinematic stars — dramatic bloom
       {
         const fgStars = fgStarsRef.current;
         for (let f = 0; f < fgStars.length; f++) {
           const fs = fgStars[f];
-          const fpx = (mx - 0.5) * fs.r * 0.3;
-          const fpy = (my - 0.5) * fs.r * 0.3;
+          const fpx = (mx - 0.5) * fs.r * 0.5;
+          const fpy = (my - 0.5) * fs.r * 0.5;
           const fx = fs.x + fpx;
           const fy = fs.y + fpy;
 
           const twinkle = 0.5 + 0.5 * Math.sin(time * 0.0005 + f * 0.7);
           const fAlpha = fs.opacity * (0.6 + 0.4 * twinkle);
 
+          // Core glow layer (larger bloom)
           ctx.save();
           ctx.globalAlpha = fAlpha;
-          const fGrad = ctx.createRadialGradient(fx, fy, 0, fx, fy, fs.r);
-          fGrad.addColorStop(0, `hsla(${fs.hue}, 50%, 80%, 0.6)`);
-          fGrad.addColorStop(0.15, `hsla(${fs.hue}, 40%, 65%, 0.3)`);
-          fGrad.addColorStop(0.5, `hsla(${fs.hue}, 30%, 50%, 0.06)`);
+          const fGrad = ctx.createRadialGradient(fx, fy, 0, fx, fy, fs.r * 1.5);
+          fGrad.addColorStop(0, `hsla(${fs.hue}, 45%, 82%, 0.55)`);
+          fGrad.addColorStop(0.08, `hsla(${fs.hue}, 35%, 68%, 0.35)`);
+          fGrad.addColorStop(0.25, `hsla(${fs.hue}, 25%, 50%, 0.12)`);
+          fGrad.addColorStop(0.55, `hsla(${fs.hue}, 15%, 35%, 0.03)`);
           fGrad.addColorStop(1, 'rgba(0,0,0,0)');
           ctx.fillStyle = fGrad;
           ctx.beginPath();
-          ctx.arc(fx, fy, fs.r, 0, Math.PI * 2);
+          ctx.arc(fx, fy, fs.r * 1.5, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Inner hot core
+          ctx.globalAlpha = fAlpha * 0.7;
+          const coreGrad = ctx.createRadialGradient(fx, fy, 0, fx, fy, fs.r * 0.2);
+          coreGrad.addColorStop(0, `hsla(${fs.hue}, 20%, 95%, 0.8)`);
+          coreGrad.addColorStop(1, 'rgba(0,0,0,0)');
+          ctx.fillStyle = coreGrad;
+          ctx.beginPath();
+          ctx.arc(fx, fy, fs.r * 0.2, 0, Math.PI * 2);
           ctx.fill();
           ctx.restore();
         }
@@ -512,6 +535,74 @@ export function Starfield() {
         tintGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
         ctx.fillStyle = tintGrad;
         ctx.fillRect(0, 0, w, h);
+        ctx.restore();
+      }
+
+      // ---- Quantum fluctuation flashes — brief virtual particles ----
+      {
+        const flashes = quantumFlashesRef.current;
+        // Spawn
+        if (Math.random() < 0.06) {
+          flashes.push({
+            x: Math.random() * w,
+            y: Math.random() * h,
+            born: time,
+            maxLife: 120 + Math.random() * 250,
+            size: 1.5 + Math.random() * 3,
+            hue: Math.random() > 0.5 ? 260 + Math.random() * 60 : 170 + Math.random() * 30,
+          });
+        }
+        for (let i = flashes.length - 1; i >= 0; i--) {
+          const f = flashes[i];
+          const age = time - f.born;
+          if (age > f.maxLife) { flashes.splice(i, 1); continue; }
+          const t = age / f.maxLife;
+          // Quick fade in, then fade out — like a virtual particle popping in/out
+          const alpha = t < 0.15 ? t / 0.15 : (1 - t) / 0.85;
+          if (alpha < 0.01) continue;
+          ctx.save();
+          ctx.globalAlpha = alpha * 0.25;
+          const fGrad = ctx.createRadialGradient(f.x, f.y, 0, f.x, f.y, f.size);
+          fGrad.addColorStop(0, `hsla(${f.hue}, 70%, 80%, 0.9)`);
+          fGrad.addColorStop(0.3, `hsla(${f.hue}, 60%, 65%, 0.4)`);
+          fGrad.addColorStop(1, 'rgba(0,0,0,0)');
+          ctx.fillStyle = fGrad;
+          ctx.beginPath();
+          ctx.arc(f.x, f.y, f.size, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+        }
+      }
+
+      // ---- Cosmic web filaments — very faint connections between nearby stars ----
+      {
+        ctx.save();
+        ctx.globalAlpha = 0.012;
+        ctx.strokeStyle = 'rgba(140, 120, 220, 1)';
+        ctx.lineWidth = 0.4;
+        const layer2Stars = stars.filter(s => s.layer >= 1 && s.opacity > 0.5);
+        const maxDist = Math.min(w, h) * 0.12;
+        for (let i = 0; i < layer2Stars.length; i++) {
+          const s1 = layer2Stars[i];
+          const p1x = s1.x + (mx - 0.5) * s1.layer * 10;
+          const p1y = s1.y + (my - 0.5) * s1.layer * 10;
+          for (let j = i + 1; j < Math.min(layer2Stars.length, i + 8); j++) {
+            const s2 = layer2Stars[j];
+            const p2x = s2.x + (mx - 0.5) * s2.layer * 10;
+            const p2y = s2.y + (my - 0.5) * s2.layer * 10;
+            const dx = p1x - p2x;
+            const dy = p1y - p2y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            if (dist < maxDist) {
+              const lineAlpha = 1 - dist / maxDist;
+              ctx.globalAlpha = lineAlpha * 0.015;
+              ctx.beginPath();
+              ctx.moveTo(p1x, p1y);
+              ctx.lineTo(p2x, p2y);
+              ctx.stroke();
+            }
+          }
+        }
         ctx.restore();
       }
 

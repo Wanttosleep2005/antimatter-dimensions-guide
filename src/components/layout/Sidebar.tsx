@@ -2,6 +2,11 @@ import { useEffect, useRef, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useProgress } from '../../hooks/useProgress';
 import { loadChapter } from '../../data/loadChapter';
+import { extractStudyTrees, extractAchievements } from '../../data/extractTools';
+
+interface SidebarProps {
+  onOpenTool: () => void;
+}
 
 type SidebarChapter = {
   id: number;
@@ -78,13 +83,19 @@ function parseSectionTitle(title: string) {
   return { marker: match[1], label: match[2].trim() };
 }
 
-export function Sidebar() {
+function cleanTitle(title: string) {
+  return title.replace(/^[一二三四五六七八九十\d]+[、.\s-]*/, '');
+}
+
+export function Sidebar({ onOpenTool }: SidebarProps) {
   const location = useLocation();
   const { getStatus } = useProgress();
   const [collapsed, setCollapsed] = useState(() => window.innerWidth < 1024);
   const [expandedPhases, setExpandedPhases] = useState<Set<number>>(ALL_PHASES);
   const [expandedChapters, setExpandedChapters] = useState<Set<number>>(() => new Set());
   const [sectionMap, setSectionMap] = useState<Record<number, SidebarSection[]>>({});
+  const [studyTreeCount, setStudyTreeCount] = useState(0);
+  const [achievementCount, setAchievementCount] = useState(0);
   const currentChapterId = Number(location.pathname.match(/\/chapter\/(\d+)/)?.[1] || 0);
   const activeSectionId = location.hash.slice(1);
 
@@ -97,10 +108,12 @@ export function Sidebar() {
 
     Promise.all(ALL_CHAPTERS.map(chapter => loadChapter(chapter.id))).then((chapters) => {
       if (cancelled) return;
-      const next: Record<number, SidebarSection[]> = {};
+
+      // Build section map
+      const nextSections: Record<number, SidebarSection[]> = {};
       chapters.forEach((chapter) => {
         if (!chapter) return;
-        next[chapter.id] = chapter.sections
+        nextSections[chapter.id] = chapter.sections
           .map((section, index) => ({
             id: `chapter-${chapter.id}-section-${index}`,
             title: section.title,
@@ -108,12 +121,17 @@ export function Sidebar() {
           }))
           .filter(section => section.title.trim().length > 0);
       });
-      setSectionMap(next);
+      setSectionMap(nextSections);
+
+      // Extract study trees and achievements
+      const validChapters = chapters.filter((c): c is NonNullable<typeof c> => Boolean(c));
+      const trees = extractStudyTrees(validChapters);
+      const achievements = extractAchievements(validChapters);
+      setStudyTreeCount(trees.length);
+      setAchievementCount(achievements.length);
     });
 
-    return () => {
-      cancelled = true;
-    };
+    return () => { cancelled = true; };
   }, []);
 
   useEffect(() => {
@@ -180,7 +198,27 @@ export function Sidebar() {
       <aside className={`guide-sidebar ${collapsed ? 'is-collapsed' : 'is-expanded'}`}>
         <div className="guide-sidebar-brand">
           <Link to="/" className="guide-sidebar-logo" aria-label="返回首页">
-            <span>&infin;</span>
+            <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+              {/* Outer hex ring — atomic structure */}
+              <path d="M14 2L26 8.5V21.5L14 28L2 21.5V8.5L14 2Z"
+                stroke="rgba(255,255,255,0.35)" strokeWidth="0.8" fill="none" />
+              {/* Inner orbit ring 1 */}
+              <ellipse cx="14" cy="14" rx="10" ry="4" stroke="rgba(255,255,255,0.25)" strokeWidth="0.6"
+                transform="rotate(-30 14 14)" fill="none" />
+              {/* Inner orbit ring 2 */}
+              <ellipse cx="14" cy="14" rx="10" ry="4" stroke="rgba(255,255,255,0.2)" strokeWidth="0.5"
+                transform="rotate(30 14 14)" fill="none" />
+              {/* Inner orbit ring 3 */}
+              <ellipse cx="14" cy="14" rx="10" ry="4" stroke="rgba(255,255,255,0.15)" strokeWidth="0.4"
+                fill="none" />
+              {/* Center core — antimatter nucleus */}
+              <circle cx="14" cy="14" r="3.5" fill="rgba(255,255,255,0.95)" />
+              <circle cx="14" cy="14" r="2" fill="rgba(124,92,240,0.6)" />
+              {/* Orbiting electron dots */}
+              <circle cx="22" cy="10" r="1" fill="rgba(255,255,255,0.8)" />
+              <circle cx="6" cy="18" r="0.8" fill="rgba(255,255,255,0.6)" />
+              <circle cx="18" cy="22" r="0.9" fill="rgba(255,255,255,0.7)" />
+            </svg>
           </Link>
           {!collapsed && (
             <Link to="/" className="guide-sidebar-title">
@@ -207,23 +245,37 @@ export function Sidebar() {
 
         <nav className="guide-sidebar-scroll" aria-label="攻略章节目录">
           {collapsed ? (
-            <div className="guide-sidebar-compact-list">
-              {SIDEBAR_PHASES.flatMap(phase => phase.chapters).map(chapter => {
-                const status = getStatus(chapter.id);
-                const isActive = chapter.id === currentChapterId;
-                const isMarked = status === 'in-progress' || status === 'completed';
-                return (
-                  <Link
-                    key={chapter.id}
-                    to={`/chapter/${chapter.id}`}
-                    title={`${chapter.id}. ${chapter.title}${chapter.range ? ` (${chapter.range})` : ''}`}
-                    className={`guide-sidebar-compact-link ${isActive ? 'is-active' : ''} ${isMarked ? 'is-marked' : ''}`}
-                  >
-                    {chapter.id}
-                  </Link>
-                );
-              })}
-            </div>
+            <>
+              {/* Expand hint at top of collapsed sidebar */}
+              <button
+                type="button"
+                onClick={() => setCollapsed(false)}
+                className="guide-sidebar-expand-hint"
+                aria-label="展开侧边栏"
+              >
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                  <path d="M6 3l5 5-5 5" />
+                </svg>
+                <span className="guide-sidebar-expand-hint-text">展开</span>
+              </button>
+              <div className="guide-sidebar-compact-list">
+                {SIDEBAR_PHASES.flatMap(phase => phase.chapters).map(chapter => {
+                  const status = getStatus(chapter.id);
+                  const isActive = chapter.id === currentChapterId;
+                  const isMarked = status === 'in-progress' || status === 'completed';
+                  return (
+                    <Link
+                      key={chapter.id}
+                      to={`/chapter/${chapter.id}`}
+                      title={`${chapter.id}. ${chapter.title}${chapter.range ? ` (${chapter.range})` : ''}`}
+                      className={`guide-sidebar-compact-link ${isActive ? 'is-active' : ''} ${isMarked ? 'is-marked' : ''}`}
+                    >
+                      {chapter.id}
+                    </Link>
+                  );
+                })}
+              </div>
+            </>
           ) : (
             SIDEBAR_PHASES.map((phase, phaseIndex) => {
               const isExpanded = expandedPhases.has(phaseIndex);
@@ -310,15 +362,52 @@ export function Sidebar() {
           )}
         </nav>
 
+        {/* Tool panels — study trees & achievements (open in modal) */}
+        {!collapsed && (
+          <div className="guide-sidebar-tool-panels">
+            {/* Study Trees — opens modal */}
+            <button
+              type="button"
+              onClick={onOpenTool}
+              className="guide-sidebar-tool-opener"
+            >
+              <span className="guide-sidebar-tool-opener-icon">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5">
+                  <path d="M7 2v10M3 6l4 4 4-4M3 10l4 2 4-2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </span>
+              <span className="guide-sidebar-tool-opener-label">时间研究树</span>
+              <span className="guide-sidebar-tool-opener-count">{studyTreeCount}</span>
+              <svg className="guide-sidebar-tool-opener-arrow" width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5">
+                <path d="M2 6h8M6 2l4 4-4 4" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </button>
+
+            {/* Achievements — opens modal */}
+            <button
+              type="button"
+              onClick={onOpenTool}
+              className="guide-sidebar-tool-opener"
+            >
+              <span className="guide-sidebar-tool-opener-icon">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5">
+                  <path d="M7 1l2 4 4.5.6-3.3 3.2.8 4.2L7 11.5l-4 2.5.8-4.2L.5 5.6 5 5l2-4z" strokeLinejoin="round"/>
+                </svg>
+              </span>
+              <span className="guide-sidebar-tool-opener-label">成就检索</span>
+              <span className="guide-sidebar-tool-opener-count">{achievementCount}</span>
+              <svg className="guide-sidebar-tool-opener-arrow" width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5">
+                <path d="M2 6h8M6 2l4 4-4 4" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </button>
+          </div>
+        )}
+
         {!collapsed && (
           <div className="guide-sidebar-tools" aria-label="工具入口">
             <Link to="/glossary" className="guide-sidebar-tool-link">
               <span className="guide-sidebar-tool-icon">&Sigma;</span>
               <span>术语表</span>
-            </Link>
-            <Link to="/#achievements" className="guide-sidebar-tool-link">
-              <span className="guide-sidebar-tool-icon">r</span>
-              <span>成就检索</span>
             </Link>
           </div>
         )}
@@ -331,15 +420,11 @@ export function Sidebar() {
       {collapsed && (
         <button
           onClick={() => setCollapsed(false)}
-          className="fixed bottom-5 left-5 z-40 lg:hidden w-12 h-12 rounded-2xl flex items-center justify-center text-white transition-transform hover:scale-110"
-          style={{
-            background: 'linear-gradient(135deg, var(--accent-color), #a78bfa)',
-            boxShadow: '0 4px 20px rgba(130,80,230,0.45)',
-          }}
-          aria-label="打开导航"
+          className="sidebar-expand-btn"
+          aria-label="展开侧边栏"
         >
-          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M3 5h14M3 10h14M3 15h14" />
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+            <path d="M7 5l5 5-5 5" />
           </svg>
         </button>
       )}
