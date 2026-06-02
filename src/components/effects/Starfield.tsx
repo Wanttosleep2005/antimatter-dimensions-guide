@@ -186,6 +186,42 @@ export function Starfield() {
       o.fillStyle = hiGrad;
       o.beginPath(); o.arc(cx, cy, gR * 0.05, 0, Math.PI * 2); o.fill();
 
+      // --- Quasar light pillars — bright vertical beams from core ---
+      {
+        const pillarH = gR * 1.1;
+        const pillarW = gR * 0.06;
+        o.save();
+        // Upward pillar
+        const upGrad = o.createLinearGradient(cx, cy, cx, cy - pillarH);
+        upGrad.addColorStop(0, 'rgba(255, 250, 235, 0.08)');
+        upGrad.addColorStop(0.02, 'rgba(220, 200, 255, 0.06)');
+        upGrad.addColorStop(0.15, 'rgba(180, 140, 240, 0.03)');
+        upGrad.addColorStop(0.5, 'rgba(120, 80, 220, 0.01)');
+        upGrad.addColorStop(1, 'rgba(0,0,0,0)');
+        o.fillStyle = upGrad;
+        o.beginPath();
+        o.moveTo(cx - pillarW, cy);
+        o.lineTo(cx - pillarW * 0.15, cy - pillarH);
+        o.lineTo(cx + pillarW * 0.15, cy - pillarH);
+        o.lineTo(cx + pillarW, cy);
+        o.fill();
+
+        // Downward pillar (dimmer, partial)
+        const dnGrad = o.createLinearGradient(cx, cy, cx, cy + pillarH * 0.7);
+        dnGrad.addColorStop(0, 'rgba(255, 250, 235, 0.06)');
+        dnGrad.addColorStop(0.03, 'rgba(200, 170, 240, 0.04)');
+        dnGrad.addColorStop(0.2, 'rgba(140, 100, 220, 0.015)');
+        dnGrad.addColorStop(1, 'rgba(0,0,0,0)');
+        o.fillStyle = dnGrad;
+        o.beginPath();
+        o.moveTo(cx - pillarW * 0.7, cy);
+        o.lineTo(cx - pillarW * 0.1, cy + pillarH * 0.7);
+        o.lineTo(cx + pillarW * 0.1, cy + pillarH * 0.7);
+        o.lineTo(cx + pillarW * 0.7, cy);
+        o.fill();
+        o.restore();
+      }
+
       // --- Arm star clusters (paint as scattered bright dots on offscreen) ---
       for (let p = 0; p < 400; p++) {
         const a = p % 4;

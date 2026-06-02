@@ -126,14 +126,79 @@ export function BlackHole() {
       // ---- 3. Photon ring (bright thin ring at event horizon edge) ----
       const photonRing = ctx.createRadialGradient(bh.cx, bh.cy, bh.radius * 0.44, bh.cx, bh.cy, bh.radius * 0.62);
       photonRing.addColorStop(0, 'rgba(0, 0, 0, 0)');
-      photonRing.addColorStop(0.45, 'rgba(180, 150, 255, 0.15)');
-      photonRing.addColorStop(0.52, 'rgba(220, 190, 255, 0.35)');
-      photonRing.addColorStop(0.58, 'rgba(180, 150, 255, 0.15)');
+      photonRing.addColorStop(0.45, 'rgba(180, 150, 255, 0.18)');
+      photonRing.addColorStop(0.52, 'rgba(230, 200, 255, 0.4)');
+      photonRing.addColorStop(0.58, 'rgba(180, 150, 255, 0.18)');
       photonRing.addColorStop(1, 'rgba(0, 0, 0, 0)');
       ctx.fillStyle = photonRing;
       ctx.beginPath();
       ctx.arc(bh.cx, bh.cy, bh.radius * 0.62, 0, Math.PI * 2);
       ctx.fill();
+
+      // ---- 3a. Einstein ring — gravitationally lensed light arc ----
+      ctx.save();
+      ctx.globalAlpha = 0.3;
+      for (let a = 0; a < 6; a++) {
+        const ringAngle = (a / 6) * Math.PI * 2;
+        const ringR = bh.radius * 0.68;
+        const rx = bh.cx + Math.cos(ringAngle) * ringR;
+        const ry = bh.cy + Math.sin(ringAngle) * ringR * 0.45;
+
+        const arcGrad = ctx.createRadialGradient(rx, ry, 0, rx, ry, bh.radius * 0.06);
+        const hue = 260 + a * 20;
+        arcGrad.addColorStop(0, `hsla(${hue}, 70%, 70%, 0.7)`);
+        arcGrad.addColorStop(0.3, `hsla(${hue}, 60%, 55%, 0.4)`);
+        arcGrad.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = arcGrad;
+        ctx.beginPath();
+        ctx.arc(rx, ry, bh.radius * 0.06, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.restore();
+
+      // ---- 3b. Gravitational lensing streaks — warped starlight arcs ----
+      for (let s = 0; s < 40; s++) {
+        const streakAngle = (s / 40) * Math.PI * 2 + angle * 0.5;
+        const streakR = bh.radius * (0.7 + (s % 3) * 0.12);
+        const sx = bh.cx + Math.cos(streakAngle) * streakR;
+        const sy = bh.cy + Math.sin(streakAngle) * streakR * 0.4;
+
+        ctx.save();
+        ctx.translate(sx, sy);
+        // Arc direction — tangent to the ring
+        const tangentAngle = streakAngle + Math.PI / 2;
+        ctx.rotate(tangentAngle);
+
+        const streakLen = bh.radius * (0.08 + Math.random() * 0.12);
+        const streakGrad = ctx.createLinearGradient(-streakLen, 0, streakLen, 0);
+        const streakAlpha = 0.03 + Math.random() * 0.04;
+        streakGrad.addColorStop(0, 'rgba(0,0,0,0)');
+        streakGrad.addColorStop(0.3, `rgba(180, 200, 255, ${streakAlpha * 2})`);
+        streakGrad.addColorStop(0.5, `rgba(220, 210, 255, ${streakAlpha * 3})`);
+        streakGrad.addColorStop(0.7, `rgba(180, 200, 255, ${streakAlpha * 2})`);
+        streakGrad.addColorStop(1, 'rgba(0,0,0,0)');
+
+        ctx.fillStyle = streakGrad;
+        ctx.fillRect(-streakLen, -1.2, streakLen * 2, 2.4);
+        ctx.restore();
+      }
+
+      // ---- 3c. Caustic bright spots (lensing magnification peaks) ----
+      const caustics = [0.3, 1.8, 3.5, 5.2];
+      for (const ca of caustics) {
+        const cax = bh.cx + Math.cos(ca + angle * 0.3) * bh.radius * 0.72;
+        const cay = bh.cy + Math.sin(ca + angle * 0.3) * bh.radius * 0.35;
+
+        const caustGrad = ctx.createRadialGradient(cax, cay, 0, cax, cay, bh.radius * 0.09);
+        caustGrad.addColorStop(0, 'rgba(255, 240, 250, 0.12)');
+        caustGrad.addColorStop(0.2, 'rgba(220, 190, 255, 0.08)');
+        caustGrad.addColorStop(0.5, 'rgba(160, 120, 240, 0.03)');
+        caustGrad.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = caustGrad;
+        ctx.beginPath();
+        ctx.arc(cax, cay, bh.radius * 0.09, 0, Math.PI * 2);
+        ctx.fill();
+      }
 
       // ---- 4. Event horizon (dark circle) ----
       const eventHorizon = ctx.createRadialGradient(bh.cx, bh.cy, 0, bh.cx, bh.cy, bh.radius * 0.46);
