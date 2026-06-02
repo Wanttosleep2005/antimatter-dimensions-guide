@@ -19,6 +19,15 @@ export function ChapterPage({ onStatusChange, getStatus, fontSize, onFontSizeCha
   const [loading, setLoading] = useState(true);
   const chapterMeta = chapterIndex.find(c => c.id === chapterId);
 
+  // Phase color mapping
+  const phaseColor = (() => {
+    if (chapterId <= 5) return 'var(--phase-infinity)';
+    if (chapterId <= 9) return 'var(--phase-eternity)';
+    if (chapterId <= 11) return 'var(--phase-dilation)';
+    if (chapterId <= 13) return 'var(--phase-reality)';
+    return 'var(--phase-celestial)';
+  })();
+
   useEffect(() => {
     setLoading(true);
     loadChapter(chapterId).then(ch => {
@@ -57,7 +66,7 @@ export function ChapterPage({ onStatusChange, getStatus, fontSize, onFontSizeCha
   }
 
   return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16 animate-fade-in-up">
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16 animate-fade-in-up" style={{ '--chapter-phase-color': phaseColor } as React.CSSProperties}>
       <GuideContent
         chapter={chapter}
         chapterId={chapterId}

@@ -1,8 +1,9 @@
-import { useEffect } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import type { Chapter } from '../../types';
 import { ReadingProgress } from '../progress/ReadingProgress';
 import { highlightTerms } from '../../utils/highlightTerms';
+import { injectGlossaryTooltips } from '../../utils/glossaryTooltips';
 import { useScrollFade } from '../../hooks/useScrollFade';
 
 interface GuideContentProps {
@@ -41,6 +42,64 @@ export function GuideContent({ chapter, chapterId, status, onStatusChange, fontS
   useScrollFade({ fadeDistance: 320, minScale: 0.82 });
   const prevChapter = chapterId > 1 ? chapterId - 1 : null;
   const nextChapter = chapterId < totalChapters ? chapterId + 1 : null;
+
+  // ── Scroll position persistence ──
+  const SCROLL_KEY = `ad-scroll-pos-${chapterId}`;
+  const savedScroll = useRef<number | null>(null);
+  const [showResume, setShowResume] = useState(false);
+
+  // Load saved position
+  useEffect(() => {
+    if (searchQuery || location.hash) {
+      savedScroll.current = null;
+      setShowResume(false);
+      return;
+    }
+    try {
+      const raw = localStorage.getItem(SCROLL_KEY);
+      if (raw) {
+        const pos = parseInt(raw);
+        if (pos > 100) {
+          savedScroll.current = pos;
+          setShowResume(true);
+        }
+      }
+    } catch { /* ignore */ }
+  }, [chapterId, SCROLL_KEY, searchQuery, location.hash]);
+
+  // Save on unload/scroll throttle
+  const saveTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    const savePos = () => {
+      localStorage.setItem(SCROLL_KEY, String(window.scrollY));
+    };
+    const onScroll = () => {
+      if (saveTimeout.current) clearTimeout(saveTimeout.current);
+      saveTimeout.current = setTimeout(savePos, 500);
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => {
+      window.removeEventListener('scroll', onScroll);
+      savePos(); // final save on unmount
+      if (saveTimeout.current) clearTimeout(saveTimeout.current);
+    };
+  }, [SCROLL_KEY]);
+
+  const resumeScroll = useCallback(() => {
+    if (savedScroll.current) {
+      window.scrollTo({ top: savedScroll.current, behavior: 'smooth' });
+      setShowResume(false);
+      savedScroll.current = null;
+    }
+  }, []);
+
+  // Estimate reading time
+  const readingTime = (() => {
+    const totalText = chapter.sections.flatMap(s => s.content).join(' ');
+    const wordCount = totalText.length;
+    const minutes = Math.max(1, Math.ceil(wordCount / 500));
+    return minutes;
+  })();
   const tocItems = chapter.sections.flatMap((section, i) => {
     const sectionId = `chapter-${chapterId}-section-${i}`;
     const sectionTitle = parseSectionTitle(section.title);
@@ -89,6 +148,17 @@ export function GuideContent({ chapter, chapterId, status, onStatusChange, fontS
           >
             {String(chapterId).padStart(2, '0')} / {String(totalChapters).padStart(2, '0')}
           </span>
+          <span
+            className="px-3 py-1.5 rounded-full text-xs font-medium"
+            style={{
+              background: 'var(--bg-tertiary)',
+              color: 'var(--text-tertiary)',
+              fontFamily: 'var(--font-mono)',
+              border: '1px solid var(--border-color)',
+            }}
+          >
+            ~{readingTime} min
+          </span>
         </div>
         <h1
           className="chapter-title text-3xl lg:text-4xl font-bold mb-4"
@@ -125,6 +195,27 @@ export function GuideContent({ chapter, chapterId, status, onStatusChange, fontS
           ))}
         </div>
       </div>
+
+      {/* Resume reading toast */}
+      {showResume && (
+        <div className="flex justify-center mb-10 animate-fade-in-up">
+          <button
+            onClick={resumeScroll}
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold transition-all hover:scale-105"
+            style={{
+              background: 'var(--accent-light)',
+              color: 'var(--accent-color)',
+              border: '1px solid var(--border-accent)',
+              fontFamily: 'var(--font-heading)',
+            }}
+          >
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5">
+              <path d="M2 2v10l5-3.5L12 12V2L7 5.5 2 2z" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+            回到上次阅读位置
+          </button>
+        </div>
+      )}
 
       {/* Font size controls */}
       <div className="chapter-font-controls flex items-center justify-center gap-2 mb-12">
@@ -191,18 +282,18 @@ export function GuideContent({ chapter, chapterId, status, onStatusChange, fontS
                 {section.title && (
                   <h2 id={sectionId} className="guide-section-heading">
                     {sectionTitle.marker && <span className="guide-section-marker">小节 {sectionTitle.marker}</span>}
-                    <span className="guide-section-title-text" dangerouslySetInnerHTML={{ __html: highlightTerms(sectionTitle.label, searchQuery) }} />
+                    <span className="guide-section-title-text" dangerouslySetInnerHTML={{ __html: injectGlossaryTooltips(highlightTerms(sectionTitle.label, searchQuery)) }} />
                   </h2>
                 )}
                 {section.content.map((text, j) => {
                   if (isPageMarker(text)) return null;
                   if (text.startsWith('## ')) {
-                    return <h3 key={j} id={`${sectionId}-sub-${j}`} dangerouslySetInnerHTML={{ __html: highlightTerms(text.slice(3), searchQuery) }} />;
+                    return <h3 key={j} id={`${sectionId}-sub-${j}`} dangerouslySetInnerHTML={{ __html: injectGlossaryTooltips(highlightTerms(text.slice(3), searchQuery)) }} />;
                   }
                   if (text.startsWith('> ')) {
-                    return <blockquote key={j} className="highlight-box" dangerouslySetInnerHTML={{ __html: highlightTerms(text.slice(2), searchQuery) }} />;
+                    return <blockquote key={j} className="highlight-box" dangerouslySetInnerHTML={{ __html: injectGlossaryTooltips(highlightTerms(text.slice(2), searchQuery)) }} />;
                   }
-                  return <p key={j} dangerouslySetInnerHTML={{ __html: highlightTerms(text, searchQuery) }} />;
+                  return <p key={j} dangerouslySetInnerHTML={{ __html: injectGlossaryTooltips(highlightTerms(text, searchQuery)) }} />;
                 })}
               </section>
             );

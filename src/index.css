@@ -78,11 +78,11 @@
   --highlight:    rgba(124,92,240,0.18);
 
   /* ── Phase Colors ── */
-  --phase-infinity:  #8b7cf6;
-  --phase-eternity:  #c084fc;
+  --phase-infinity:  #f0a000;
+  --phase-eternity:  #a855f7;
   --phase-dilation:  #818cf8;
-  --phase-reality:   #a78bfa;
-  --phase-celestial: #38bdf8;
+  --phase-reality:   #22c55e;
+  --phase-celestial: #3b82f6;
 
   /* ── Typography ── */
   --font-body:    'Inter Variable', 'Inter', 'Noto Sans SC', 'Microsoft YaHei', system-ui, -apple-system, sans-serif;
@@ -2333,13 +2333,66 @@ p .rune-spec {
   background: linear-gradient(
     90deg,
     transparent 0%,
-    rgba(168, 128, 255, 0.15) 20%,
-    rgba(34, 211, 238, 0.20) 50%,
-    rgba(168, 128, 255, 0.15) 80%,
+    var(--chapter-phase-color, rgba(168, 128, 255, 0.15)) 20%,
+    color-mix(in srgb, var(--chapter-phase-color, rgba(168, 128, 255, 0.15)) 70%, var(--accent2-color) 30%) 50%,
+    var(--chapter-phase-color, rgba(168, 128, 255, 0.15)) 80%,
     transparent 100%
   );
   background-size: 200% 100%;
   animation: divider-flow 6s ease-in-out infinite;
+}
+
+/* Phase-tinted chapter accent */
+.chapter-kicker,
+.chapter-toc-pill:hover,
+.chapter-toc-pill.is-active {
+  --phase-tint: var(--chapter-phase-color, var(--accent-color));
+}
+
+/* ================================================================
+   31. GLOSSARY INLINE TOOLTIPS
+   ================================================================ */
+.glossary-inline {
+  cursor: help;
+  border-bottom: 1.5px dotted var(--accent2-color);
+  color: var(--text-primary);
+  position: relative;
+  white-space: nowrap;
+  transition: border-color 0.2s;
+}
+.glossary-inline:hover {
+  border-bottom-color: var(--accent-color);
+}
+
+.glossary-inline::after {
+  content: attr(data-tip);
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%) scale(0.92);
+  background: var(--card-elevated);
+  color: var(--text-primary);
+  font-size: 11px;
+  font-weight: 400;
+  font-family: var(--font-body);
+  padding: 8px 12px;
+  border-radius: 8px;
+  white-space: normal;
+  max-width: 280px;
+  min-width: 160px;
+  z-index: 999;
+  pointer-events: none;
+  opacity: 0;
+  line-height: 1.5;
+  text-align: center;
+  border: 1px solid var(--border-strong);
+  box-shadow: var(--shadow-elevated);
+  transition: opacity 0.15s ease, transform 0.15s ease;
+  word-break: break-all;
+}
+.glossary-inline:hover::after {
+  opacity: 1;
+  transform: translateX(-50%) scale(1);
 }
 
 /* ================================================================

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ProgressBar } from '../components/progress/ProgressBar';
 import { useProgress } from '../hooks/useProgress';
+import { useTilt } from '../hooks/useTilt';
 import { chapterIndex, loadChapter } from '../data/loadChapter';
 import { cleanTitle } from '../utils/titleClean';
 import type { Chapter } from '../types';
@@ -55,6 +56,43 @@ function phaseForChapter(chapterId: number) {
   return PHASES.find(phase => chapterId >= phase.range[0] && chapterId <= phase.range[1]) ?? PHASES[0];
 }
 
+// ── Reading streak tracking ──
+function getReadingStreak(): number {
+  try {
+    const raw = localStorage.getItem('ad-reading-days');
+    if (!raw) return 0;
+    const days: string[] = JSON.parse(raw);
+    // Count consecutive days from today backwards
+    let streak = 0;
+    const today = new Date();
+    for (let i = 0; i < days.length; i++) {
+      const expected = new Date(today);
+      expected.setDate(today.getDate() - i);
+      const expectedStr = expected.toISOString().slice(0, 10);
+      if (days.includes(expectedStr)) streak++;
+      else break;
+    }
+    return streak;
+  } catch { return 0; }
+}
+
+function markReadingDay() {
+  try {
+    const today = new Date().toISOString().slice(0, 10);
+    const raw = localStorage.getItem('ad-reading-days');
+    const days: string[] = raw ? JSON.parse(raw) : [];
+    if (!days.includes(today)) {
+      days.push(today);
+      localStorage.setItem('ad-reading-days', JSON.stringify(days));
+    }
+  } catch { /* ignore */ }
+}
+
+function estimateTotalMinutes(completed: number): number {
+  // Rough estimate: completed chapters × average reading time
+  return Math.max(0, completed * 8);
+}
+
 export function HomePage({ completed, total, inProgress }: { completed: number; total: number; inProgress: number }) {
   const { getStatus } = useProgress();
   const navigate = useNavigate();
@@ -62,6 +100,12 @@ export function HomePage({ completed, total, inProgress }: { completed: number; 
   const pct = total > 0 ? Math.round((completed / total) * 100) : 0;
   const [displayPct, setDisplayPct] = useState(0);
   const [chapters, setChapters] = useState<Chapter[]>([]);
+  const streak = getReadingStreak();
+  const totalMins = estimateTotalMinutes(completed);
+  const tiltRef = useTilt<HTMLDivElement>(6);
+
+  // Mark reading day when visiting homepage
+  useEffect(() => { markReadingDay(); }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -162,14 +206,33 @@ export function HomePage({ completed, total, inProgress }: { completed: number; 
           </div>
 
           <div className="mt-14">
-            <article className="scanline-card card-premium glass-panel p-6 spring-hover shimmer-border ambient-glow max-w-xl">
-              <p className="eyebrow-text">阅读进度</p>
-              <div className="mt-5 flex items-end gap-2">
+            <article ref={tiltRef} className="scanline-card card-premium glass-panel p-6 spring-hover shimmer-border ambient-glow max-w-xl tilt-container">
+              <p className="eyebrow-text tilt-child">阅读进度</p>
+              <div className="mt-5 flex items-end gap-2 tilt-child">
                 <span className="progress-number">{displayPct}</span>
                 <span className="pb-4 text-2xl font-bold" style={{ color: 'var(--text-tertiary)' }}>%</span>
               </div>
-              <div className="mt-6">
+              <div className="mt-6 tilt-child">
                 <ProgressBar completed={completed} total={total} inProgress={inProgress} />
+              </div>
+              {/* Enhanced stats row */}
+              <div className="tilt-child mt-6 grid grid-cols-3 gap-3 pt-5" style={{ borderTop: '1px solid var(--border-color)' }}>
+                <div className="text-center">
+                  <div className="text-2xl font-bold" style={{ color: 'var(--accent-color)', fontFamily: 'var(--font-mono)' }}>{completed}</div>
+                  <div className="text-xs mt-1" style={{ color: 'var(--text-tertiary)' }}>已完成</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold" style={{ color: 'var(--accent2-color)', fontFamily: 'var(--font-mono)' }}>
+                    {streak > 0 ? streak : '—'}
+                  </div>
+                  <div className="text-xs mt-1" style={{ color: 'var(--text-tertiary)' }}>{streak > 0 ? '连续天数' : '今日首次'}</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold" style={{ color: 'var(--text-secondary)', fontFamily: 'var(--font-mono)' }}>
+                    {totalMins >= 60 ? `${Math.floor(totalMins / 60)}h` : `${totalMins}m`}
+                  </div>
+                  <div className="text-xs mt-1" style={{ color: 'var(--text-tertiary)' }}>阅读时长</div>
+                </div>
               </div>
             </article>
           </div>
