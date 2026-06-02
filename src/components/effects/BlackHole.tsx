@@ -22,6 +22,7 @@ export function BlackHole() {
     let h = window.innerHeight;
     let angle = 0;
     let raf = 0;
+    let lastFrame = 0;
 
     const resize = () => {
       w = window.innerWidth;
@@ -47,6 +48,19 @@ export function BlackHole() {
     let lastWaveTime = 0;
 
     const animate = (timestamp: number) => {
+      // Throttle to ~30fps — gravitational waves don't need 60fps
+      if (timestamp - lastFrame < 32) {
+        raf = requestAnimationFrame(animate);
+        return;
+      }
+      lastFrame = timestamp;
+
+      // Skip rendering when page is hidden
+      if (document.hidden) {
+        raf = requestAnimationFrame(animate);
+        return;
+      }
+
       angle += 0.0008;
       ctx.clearRect(0, 0, w, h);
 

@@ -175,12 +175,25 @@ export function HomePage({ completed, total, inProgress }: { completed: number; 
 
   useEffect(() => {
     let cancelled = false;
-    Promise.all(chapterIndex.map(chapter => loadChapter(chapter.id))).then((loaded) => {
-      if (!cancelled) setChapters(loaded.filter((chapter): chapter is Chapter => Boolean(chapter)));
-    });
-    return () => {
-      cancelled = true;
+    // Lazy-load chapters in small batches for fast first paint
+    const BATCH_SIZE = 4;
+    const ids = chapterIndex.map(c => c.id);
+    const results: Chapter[] = [];
+
+    const loadBatch = async (startIdx: number) => {
+      if (cancelled || startIdx >= ids.length) return;
+      const batch = ids.slice(startIdx, startIdx + BATCH_SIZE);
+      const loaded = await Promise.all(batch.map(id => loadChapter(id)));
+      if (!cancelled) {
+        results.push(...loaded.filter((c): c is Chapter => Boolean(c)));
+        setChapters([...results]);
+        // Schedule next batch with a small gap to let UI breathe
+        setTimeout(() => loadBatch(startIdx + BATCH_SIZE), 50);
+      }
     };
+
+    loadBatch(0);
+    return () => { cancelled = true; };
   }, []);
 
   useEffect(() => {

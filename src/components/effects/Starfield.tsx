@@ -32,6 +32,8 @@ export function Starfield() {
   const rafRef = useRef<number>(0);
   const lastShootingStarRef = useRef(0);
   const mouseRef = useRef({ x: 0.5, y: 0.5 });
+  const galaxyWorkerRef = useRef<Worker | null>(null);
+  const galaxyArmCache = useRef<{ key: string; points: { x: number; y: number }[][] } | null>(null);
 
   const initStars = useCallback((w: number, h: number) => {
     const stars: Star[] = [];
@@ -86,12 +88,55 @@ export function Starfield() {
     resize();
     window.addEventListener('resize', resize);
 
+    // Spawn galaxy computation worker
+    try {
+      const worker = new Worker(
+        new URL('../../workers/galaxy-worker.ts', import.meta.url),
+        { type: 'module' }
+      );
+      worker.onmessage = (e) => {
+        if (e.data.type === 'armPoints') {
+          galaxyArmCache.current = {
+            key: 'computed',
+            points: e.data.points,
+          };
+        }
+      };
+      galaxyWorkerRef.current = worker;
+    } catch {
+      // Worker not available — fallback to main thread computation (already handled)
+    }
+
+    // Send initial galaxy config to worker
+    const sendGalaxyConfig = () => {
+      const worker = galaxyWorkerRef.current;
+      if (!worker) return;
+      worker.postMessage({
+        type: 'config',
+        config: {
+          gx: w * 0.35,
+          gy: h * 0.48,
+          gR: Math.min(w, h) * 0.32,
+          armCount: 4,
+          armTurns: 2.2,
+          armSegments: 280,
+          galaxyRotation: 0,
+        },
+      });
+    };
+    sendGalaxyConfig();
+
     const handleMouse = (e: MouseEvent) => {
       mouseRef.current = { x: e.clientX / w, y: e.clientY / h };
     };
     window.addEventListener('mousemove', handleMouse, { passive: true });
 
     const animate = (time: number) => {
+      // Skip rendering when page is hidden — save CPU/GPU
+      if (document.hidden) {
+        rafRef.current = requestAnimationFrame(animate);
+        return;
+      }
       const stars = starsRef.current;
       const shootingStars = shootingStarsRef.current;
       const mx = mouseRef.current.x;
@@ -178,30 +223,33 @@ export function Starfield() {
         ctx.restore();
 
         // -- Spiral arms: 4 majestic arms, 2.2 turns --
+        // Use worker-computed points when available, fallback to inline calculation
         const armCount = 4;
         const armTurns = 2.2;
         const armSegments = 280;
         const armColors = [
-          { r: 100, g: 150, b: 240 },  // blue
-          { r: 180, g: 110, b: 230 },  // violet
-          { r: 80, g: 170, b: 250 },   // cyan-blue
-          { r: 190, g: 140, b: 220 },  // lavender
+          { r: 100, g: 150, b: 240 },
+          { r: 180, g: 110, b: 230 },
+          { r: 80, g: 170, b: 250 },
+          { r: 190, g: 140, b: 220 },
         ];
 
-        // Pre-compute all spiral points
-        const allArmPoints: { x: number; y: number }[][] = [];
-        for (let a = 0; a < armCount; a++) {
-          const baseAngle = (a / armCount) * Math.PI * 2 + 0.5 + galaxyRotation;
-          const pts: { x: number; y: number }[] = [];
-          for (let i = 0; i <= armSegments; i++) {
-            const t = i / armSegments;
-            const theta = baseAngle + t * armTurns * Math.PI * 2;
-            const r = gR * (0.04 + t * 0.76);
-            const x = gx + Math.cos(theta) * r;
-            const y = gy + Math.sin(theta) * r * 0.58;
-            pts.push({ x, y });
+        const cachedArms = galaxyArmCache.current?.points;
+        const allArmPoints: { x: number; y: number }[][] = cachedArms ?? [];
+
+        if (!cachedArms) {
+          // Fallback: compute inline if worker not available
+          for (let a = 0; a < armCount; a++) {
+            const baseAngle = (a / armCount) * Math.PI * 2 + 0.5 + galaxyRotation;
+            const pts: { x: number; y: number }[] = [];
+            for (let i = 0; i <= armSegments; i++) {
+              const t = i / armSegments;
+              const theta = baseAngle + t * armTurns * Math.PI * 2;
+              const r = gR * (0.04 + t * 0.76);
+              pts.push({ x: gx + Math.cos(theta) * r, y: gy + Math.sin(theta) * r * 0.58 });
+            }
+            allArmPoints.push(pts);
           }
-          allArmPoints.push(pts);
         }
 
         // -- Dust lanes: dark paths between arms (rendered first, behind arms) --
@@ -539,6 +587,10 @@ export function Starfield() {
       cancelAnimationFrame(rafRef.current);
       window.removeEventListener('resize', resize);
       window.removeEventListener('mousemove', handleMouse);
+      // Terminate worker to free memory
+      galaxyWorkerRef.current?.terminate();
+      galaxyWorkerRef.current = null;
+      galaxyArmCache.current = null;
     };
   }, [initStars, spawnShootingStar]);
 
