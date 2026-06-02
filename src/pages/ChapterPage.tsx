@@ -38,7 +38,10 @@ export function ChapterPage({ onStatusChange, getStatus, fontSize, onFontSizeCha
 
   useEffect(() => {
     if (chapterMeta) {
-      onStatusChange(chapterId, 'in-progress');
+      const current = getStatus(chapterId);
+      if (current !== 'completed') {
+        onStatusChange(chapterId, 'in-progress');
+      }
       localStorage.setItem('ad-guide-last-chapter', JSON.stringify({ id: chapterId, title: chapterMeta.title }));
 
       // Track recent chapters

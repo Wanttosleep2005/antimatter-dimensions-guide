@@ -342,16 +342,45 @@ export function GuideContent({ chapter, chapterId, status, onStatusChange, fontS
             &larr; 上一章
           </Link>
         ) : <div />}
-        <Link
-          to="/"
-          className="text-sm font-medium transition-colors hover:text-[var(--accent-color)]"
-          style={{
-            color: 'var(--text-tertiary)',
-            fontFamily: 'var(--font-heading)',
-          }}
-        >
-          目录
-        </Link>
+
+        <div className="flex items-center gap-3">
+          {status !== 'completed' && (
+            <button
+              type="button"
+              onClick={() => onStatusChange('completed')}
+              className="text-sm font-semibold px-5 py-2 rounded-xl border transition-all duration-200 hover:scale-105 press-spring"
+              style={{
+                borderColor: 'var(--success)',
+                color: 'var(--success)',
+                background: 'var(--success-bg)',
+                fontFamily: 'var(--font-heading)',
+              }}
+            >
+              &#10003; 标记完成
+            </button>
+          )}
+          {status === 'completed' && (
+            <button
+              type="button"
+              onClick={() => onStatusChange('not-started')}
+              className="text-sm font-semibold px-5 py-2 rounded-xl border transition-all duration-200 hover:scale-105"
+              style={{
+                borderColor: 'var(--border-color)',
+                color: 'var(--text-tertiary)',
+                fontFamily: 'var(--font-heading)',
+              }}
+            >
+              撤销完成
+            </button>
+          )}
+          <Link
+            to="/"
+            className="text-sm font-medium transition-colors hover:text-[var(--accent-color)]"
+            style={{ color: 'var(--text-tertiary)', fontFamily: 'var(--font-heading)' }}
+          >
+            目录
+          </Link>
+        </div>
         {nextChapter ? (
           <Link
             to={`/chapter/${nextChapter}`}

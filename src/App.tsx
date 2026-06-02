@@ -112,7 +112,7 @@ function AppRoutes() {
         <Routes>
           <Route
             path="/"
-            element={<HomePage completed={stats.completed} total={stats.total} inProgress={stats.inProgress} getStatus={getStatus} />}
+            element={<HomePage completed={stats.completed} total={stats.total} inProgress={stats.inProgress} getStatus={getStatus} onOpenSearch={() => setSearchOpen(true)} />}
           />
           <Route
             path="/chapter/:id"

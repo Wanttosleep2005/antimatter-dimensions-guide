@@ -75,6 +75,13 @@ const SIDEBAR_PHASES: SidebarPhase[] = [
 
 const ALL_PHASES = new Set(SIDEBAR_PHASES.map((_, index) => index));
 const ALL_CHAPTERS = SIDEBAR_PHASES.flatMap(phase => phase.chapters);
+const phaseColors = [
+  'var(--phase-infinity)',
+  'var(--phase-eternity)',
+  'var(--phase-dilation)',
+  'var(--phase-reality)',
+  'var(--phase-celestial)',
+];
 
 function parseSectionTitle(title: string) {
   const match = title.trim().match(/^(\d+\.\d+)\s*(.*)$/);
@@ -84,8 +91,7 @@ function parseSectionTitle(title: string) {
 
 export function Sidebar({}: SidebarProps) {
   const location = useLocation();
-  const { getStatus } = useProgress();
-  const [collapsed, setCollapsed] = useState(() => window.innerWidth < 1024);
+  const { getStatus } = useProgress();  const [collapsed, setCollapsed] = useState(() => window.innerWidth < 1024);
   const [expandedPhases, setExpandedPhases] = useState<Set<number>>(ALL_PHASES);
   const [expandedChapters, setExpandedChapters] = useState<Set<number>>(() => new Set());
   const [sectionMap, setSectionMap] = useState<Record<number, SidebarSection[]>>({});
@@ -280,6 +286,9 @@ export function Sidebar({}: SidebarProps) {
                     type="button"
                     onClick={() => togglePhase(phaseIndex)}
                     className="guide-sidebar-phase-trigger"
+                    style={{
+                      borderLeft: `3px solid ${phaseColors[phaseIndex] || 'var(--border-color)'}`,
+                    }}
                   >
                     <span>{phase.title}</span>
                     <svg
