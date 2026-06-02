@@ -89,15 +89,14 @@ export function Starfield() {
     resize();
     window.addEventListener('resize', resize);
 
-    /** Build the galaxy texture once on an offscreen canvas */
-    const buildGalaxyTexture = () => {
+    /** Build Carina Nebula texture on an offscreen canvas */
+    const buildNebulaTexture = () => {
       const gx = w * 0.35;
       const gy = h * 0.48;
-      const gR = Math.min(w, h) * 0.32;
+      const gR = Math.min(w, h) * 0.30;
       galaxyDims.current = { gx, gy, gR };
 
-      // Offscreen canvas: slightly larger than galaxy for rotation bleed
-      const size = Math.ceil(gR * 2.4);
+      const size = Math.ceil(gR * 2.5);
       const off = document.createElement('canvas');
       off.width = size;
       off.height = size;
@@ -105,146 +104,180 @@ export function Starfield() {
       const cx = size / 2;
       const cy = size / 2;
 
-      // --- Halo ---
-      const hGrad = o.createRadialGradient(cx, cy, gR * 0.2, cx, cy, gR * 1.15);
-      hGrad.addColorStop(0, 'rgba(40, 15, 100, 0)');
-      hGrad.addColorStop(0.25, 'rgba(55, 20, 130, 0.06)');
-      hGrad.addColorStop(0.55, 'rgba(30, 10, 80, 0.08)');
-      hGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
-      o.fillStyle = hGrad;
-      o.beginPath(); o.ellipse(cx, cy, gR * 1.15, gR * 0.75, -0.3, 0, Math.PI * 2); o.fill();
+      // --- 1. Deep outer glow (faint red-brown halo) ---
+      const outerGlow = o.createRadialGradient(cx, cy, gR * 0.3, cx, cy, gR * 1.2);
+      outerGlow.addColorStop(0, 'rgba(60, 10, 5, 0)');
+      outerGlow.addColorStop(0.2, 'rgba(80, 20, 10, 0.04)');
+      outerGlow.addColorStop(0.5, 'rgba(40, 8, 3, 0.06)');
+      outerGlow.addColorStop(0.8, 'rgba(15, 2, 1, 0.025)');
+      outerGlow.addColorStop(1, 'rgba(0,0,0,0)');
+      o.fillStyle = outerGlow;
+      o.beginPath(); o.ellipse(cx, cy, gR * 1.2, gR * 0.9, 0, 0, Math.PI * 2); o.fill();
 
-      // --- 4 spiral arms (painted as soft wide arcs) ---
-      const armColors = [
-        { r: 90, g: 140, b: 240 },
-        { r: 170, g: 105, b: 230 },
-        { r: 70, g: 160, b: 245 },
-        { r: 185, g: 135, b: 225 },
+      // --- 2. Warm emission gas clouds (H-alpha red/orange regions) ---
+      const gasBlobs = [
+        { x: -0.15, y: -0.05, r: 0.55, c: '255, 80, 30', a: 0.07 },   // main orange glow
+        { x: 0.10, y: -0.15, r: 0.45, c: '255, 60, 20', a: 0.055 },   // upper hot spot
+        { x: -0.20, y: 0.10, r: 0.40, c: '240, 70, 35', a: 0.05 },    // lower left glow
+        { x: 0.15, y: 0.05, r: 0.38, c: '255, 90, 40', a: 0.045 },    // right warm area
+        { x: 0.00, y: 0.18, r: 0.35, c: '220, 55, 25', a: 0.04 },     // bottom emission
+        { x: -0.10, y: -0.25, r: 0.32, c: '255, 70, 25', a: 0.035 },  // top plume
+        { x: 0.20, y: -0.08, r: 0.30, c: '230, 65, 30', a: 0.03 },    // right hotspot
+        { x: -0.25, y: -0.18, r: 0.28, c: '240, 75, 35', a: 0.028 },  // far left
       ];
-      const armTurns = 2.2;
-      const armWidth = gR * 0.12;
-
-      for (let a = 0; a < 4; a++) {
-        const baseAngle = (a / 4) * Math.PI * 2 + 0.5;
-        const clr = armColors[a];
-        const steps = 360;
-        for (let i = 0; i < steps; i++) {
-          const t = i / steps;
-          const theta = baseAngle + t * armTurns * Math.PI * 2;
-          const r = gR * (0.03 + t * 0.78);
-          const ax = cx + Math.cos(theta) * r;
-          const ay = cy + Math.sin(theta) * r * 0.58;
-
-          // Arm gradient: bright inner edge, fading outward
-          const segGrad = o.createRadialGradient(ax, ay, 0, ax, ay, armWidth * (1 - t * 0.65));
-          const alpha = 0.08 * (1 - t * 0.75);
-          segGrad.addColorStop(0, `rgba(${clr.r + 60}, ${clr.g + 40}, ${clr.b + 10}, ${alpha * 1.4})`);
-          segGrad.addColorStop(0.3, `rgba(${clr.r}, ${clr.g}, ${clr.b}, ${alpha})`);
-          segGrad.addColorStop(0.7, `rgba(${clr.r - 20}, ${clr.g - 20}, ${clr.b - 20}, ${alpha * 0.3})`);
-          segGrad.addColorStop(1, 'rgba(0,0,0,0)');
-          o.fillStyle = segGrad;
-          o.beginPath();
-          o.arc(ax, ay, armWidth * (1 - t * 0.65), 0, Math.PI * 2);
-          o.fill();
-        }
+      for (const gb of gasBlobs) {
+        const bx = cx + gb.x * gR;
+        const by = cy + gb.y * gR;
+        const br = gb.r * gR;
+        const grad = o.createRadialGradient(bx, by, 0, bx, by, br);
+        grad.addColorStop(0, `rgba(${gb.c}, ${gb.a})`);
+        grad.addColorStop(0.3, `rgba(${gb.c}, ${gb.a * 0.7})`);
+        grad.addColorStop(0.6, `rgba(${gb.c}, ${gb.a * 0.25})`);
+        grad.addColorStop(1, 'rgba(0,0,0,0)');
+        o.fillStyle = grad;
+        o.beginPath(); o.arc(bx, by, br, 0, Math.PI * 2); o.fill();
       }
 
-      // --- Dust lanes (dark arc segments between arms) ---
-      for (let dl = 0; dl < 4; dl++) {
-        const dustAngle = ((dl + 0.5) / 4) * Math.PI * 2 + 0.5;
-        for (let i = 80; i < 280; i++) {
-          const t = i / 360;
-          const theta = dustAngle + t * armTurns * Math.PI * 2;
-          const r = gR * (0.07 + t * 0.7);
-          const dx = cx + Math.cos(theta) * r;
-          const dy = cy + Math.sin(theta) * r * 0.58;
-          o.globalAlpha = 0.035;
-          o.fillStyle = 'rgba(2, 1, 6, 0.7)';
-          o.beginPath();
-          o.arc(dx, dy, gR * 0.025, 0, Math.PI * 2);
-          o.fill();
-        }
+      // --- 3. Blue reflection nebulae (scattered starlight) ---
+      const blueBlobs = [
+        { x: 0.25, y: -0.20, r: 0.22, a: 0.03 },
+        { x: -0.30, y: -0.10, r: 0.20, a: 0.025 },
+        { x: 0.10, y: 0.22, r: 0.18, a: 0.02 },
+      ];
+      for (const bb of blueBlobs) {
+        const bx = cx + bb.x * gR;
+        const by = cy + bb.y * gR;
+        const br = bb.r * gR;
+        const bGrad = o.createRadialGradient(bx, by, 0, bx, by, br);
+        bGrad.addColorStop(0, `rgba(120, 180, 255, ${bb.a * 1.2})`);
+        bGrad.addColorStop(0.4, `rgba(100, 150, 240, ${bb.a * 0.7})`);
+        bGrad.addColorStop(0.8, `rgba(60, 100, 200, ${bb.a * 0.2})`);
+        bGrad.addColorStop(1, 'rgba(0,0,0,0)');
+        o.fillStyle = bGrad;
+        o.beginPath(); o.arc(bx, by, br, 0, Math.PI * 2); o.fill();
       }
-      o.globalAlpha = 1;
 
-      // --- Core glow ---
-      const cGrad = o.createRadialGradient(cx, cy, 0, cx, cy, gR * 0.25);
-      cGrad.addColorStop(0, 'rgba(255, 245, 225, 0.18)');
-      cGrad.addColorStop(0.04, 'rgba(255, 225, 170, 0.12)');
-      cGrad.addColorStop(0.15, 'rgba(220, 140, 200, 0.06)');
-      cGrad.addColorStop(0.4, 'rgba(100, 40, 160, 0.025)');
-      cGrad.addColorStop(0.7, 'rgba(50, 15, 100, 0.01)');
-      cGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
-      o.fillStyle = cGrad;
-      o.beginPath(); o.ellipse(cx, cy, gR * 0.25, gR * 0.16, -0.3, 0, Math.PI * 2); o.fill();
-
-      // --- Core highlight (tiny bright center) ---
-      const hiGrad = o.createRadialGradient(cx, cy, 0, cx, cy, gR * 0.05);
-      hiGrad.addColorStop(0, 'rgba(255, 252, 245, 0.25)');
-      hiGrad.addColorStop(0.5, 'rgba(255, 230, 180, 0.08)');
-      hiGrad.addColorStop(1, 'rgba(0,0,0,0)');
-      o.fillStyle = hiGrad;
-      o.beginPath(); o.arc(cx, cy, gR * 0.05, 0, Math.PI * 2); o.fill();
-
-      // --- Quasar light pillars — bright vertical beams from core ---
-      {
-        const pillarH = gR * 1.1;
-        const pillarW = gR * 0.06;
+      // --- 4. Dark dust pillars (molecular clouds, Keyhole) ---
+      const drawPillar = (px: number, py: number, pw: number, ph: number, rot: number) => {
         o.save();
-        // Upward pillar
-        const upGrad = o.createLinearGradient(cx, cy, cx, cy - pillarH);
-        upGrad.addColorStop(0, 'rgba(255, 250, 235, 0.08)');
-        upGrad.addColorStop(0.02, 'rgba(220, 200, 255, 0.06)');
-        upGrad.addColorStop(0.15, 'rgba(180, 140, 240, 0.03)');
-        upGrad.addColorStop(0.5, 'rgba(120, 80, 220, 0.01)');
-        upGrad.addColorStop(1, 'rgba(0,0,0,0)');
-        o.fillStyle = upGrad;
+        o.translate(cx + px * gR, cy + py * gR);
+        o.rotate(rot);
+        const pGrad = o.createLinearGradient(0, -ph, 0, ph * 0.3);
+        pGrad.addColorStop(0, 'rgba(2, 1, 3, 0.85)');
+        pGrad.addColorStop(0.4, 'rgba(3, 2, 5, 0.6)');
+        pGrad.addColorStop(0.7, 'rgba(5, 3, 8, 0.25)');
+        pGrad.addColorStop(1, 'rgba(0,0,0,0)');
+        o.fillStyle = pGrad;
         o.beginPath();
-        o.moveTo(cx - pillarW, cy);
-        o.lineTo(cx - pillarW * 0.15, cy - pillarH);
-        o.lineTo(cx + pillarW * 0.15, cy - pillarH);
-        o.lineTo(cx + pillarW, cy);
+        // Irregular pillar shape (trapezoid with jagged top)
+        o.moveTo(-pw * 0.3, -ph * 0.2);
+        o.lineTo(-pw * 0.6, -ph);
+        o.lineTo(-pw * 0.2, -ph * 0.9);
+        o.lineTo(pw * 0.1, -ph * 0.95);
+        o.lineTo(pw * 0.5, -ph * 0.7);
+        o.lineTo(pw * 0.3, -ph * 0.15);
         o.fill();
+        o.restore();
+      };
 
-        // Downward pillar (dimmer, partial)
-        const dnGrad = o.createLinearGradient(cx, cy, cx, cy + pillarH * 0.7);
-        dnGrad.addColorStop(0, 'rgba(255, 250, 235, 0.06)');
-        dnGrad.addColorStop(0.03, 'rgba(200, 170, 240, 0.04)');
-        dnGrad.addColorStop(0.2, 'rgba(140, 100, 220, 0.015)');
-        dnGrad.addColorStop(1, 'rgba(0,0,0,0)');
-        o.fillStyle = dnGrad;
-        o.beginPath();
-        o.moveTo(cx - pillarW * 0.7, cy);
-        o.lineTo(cx - pillarW * 0.1, cy + pillarH * 0.7);
-        o.lineTo(cx + pillarW * 0.1, cy + pillarH * 0.7);
-        o.lineTo(cx + pillarW * 0.7, cy);
-        o.fill();
+      // Keyhole dark region (center-right)
+      drawPillar(0.05, -0.05, 0.18, 0.55, 0.15);
+      // Left dark pillar
+      drawPillar(-0.20, -0.08, 0.14, 0.45, -0.2);
+      // Upper tendril
+      drawPillar(0.12, -0.2, 0.10, 0.35, 0.3);
+      // Lower dark cloud
+      drawPillar(-0.05, 0.12, 0.15, 0.30, 0.05);
+
+      // --- 5. Wispy tendrils (thin filamentary structure) ---
+      for (let w = 0; w < 60; w++) {
+        const angle = Math.random() * Math.PI * 2;
+        const dist = gR * (0.1 + Math.random() * 0.7);
+        const wx = cx + Math.cos(angle) * dist;
+        const wy = cy + Math.sin(angle) * dist;
+        const wLen = gR * (0.04 + Math.random() * 0.15);
+        const wAngle = angle + (Math.random() - 0.5) * 1.2;
+
+        o.save();
+        o.translate(wx, wy);
+        o.rotate(wAngle);
+        const wGrad = o.createLinearGradient(0, 0, wLen, 0);
+        const wAlpha = 0.008 + Math.random() * 0.02;
+        wGrad.addColorStop(0, `rgba(200, 120, 80, ${wAlpha})`);
+        wGrad.addColorStop(0.5, `rgba(180, 100, 60, ${wAlpha * 0.6})`);
+        wGrad.addColorStop(1, 'rgba(0,0,0,0)');
+        o.fillStyle = wGrad;
+        o.fillRect(0, -0.8, wLen, 1.6);
         o.restore();
       }
 
-      // --- Arm star clusters (paint as scattered bright dots on offscreen) ---
-      for (let p = 0; p < 400; p++) {
-        const a = p % 4;
-        const baseAngle = (a / 4) * Math.PI * 2 + 0.5;
-        const t = 0.02 + Math.random() * 0.76;
-        const theta = baseAngle + t * armTurns * Math.PI * 2 + (Math.random() - 0.5) * 0.2;
-        const r = gR * (0.03 + t * 0.78);
-        const sx = cx + Math.cos(theta) * r + (Math.random() - 0.5) * gR * 0.06;
-        const sy = cy + Math.sin(theta) * r * 0.58 + (Math.random() - 0.5) * gR * 0.03;
+      // --- 6. Eta Carinae analog — central bright star system ---
+      const etaGrad = o.createRadialGradient(cx + gR * 0.05, cy - gR * 0.08, 0,
+                                              cx + gR * 0.05, cy - gR * 0.08, gR * 0.12);
+      etaGrad.addColorStop(0, 'rgba(255, 250, 240, 0.5)');
+      etaGrad.addColorStop(0.01, 'rgba(255, 240, 210, 0.3)');
+      etaGrad.addColorStop(0.05, 'rgba(255, 200, 140, 0.12)');
+      etaGrad.addColorStop(0.15, 'rgba(200, 100, 60, 0.04)');
+      etaGrad.addColorStop(0.35, 'rgba(100, 30, 20, 0.01)');
+      etaGrad.addColorStop(1, 'rgba(0,0,0,0)');
+      o.fillStyle = etaGrad;
+      o.beginPath(); o.arc(cx + gR * 0.05, cy - gR * 0.08, gR * 0.12, 0, Math.PI * 2); o.fill();
 
-        const isBlue = Math.random() > 0.5;
-        o.globalAlpha = 0.02 + Math.random() * 0.06;
-        const glowGrad = o.createRadialGradient(sx, sy, 0, sx, sy, 2.5);
-        glowGrad.addColorStop(0, isBlue ? 'rgba(180, 210, 255, 0.8)' : 'rgba(255, 230, 190, 0.7)');
-        glowGrad.addColorStop(1, 'rgba(0,0,0,0)');
-        o.fillStyle = glowGrad;
-        o.beginPath(); o.arc(sx, sy, 2.5, 0, Math.PI * 2); o.fill();
+      // Eta Carinae 4-point diffraction spike
+      o.save();
+      o.translate(cx + gR * 0.05, cy - gR * 0.08);
+      o.globalAlpha = 0.15;
+      for (let s = 0; s < 4; s++) {
+        const sa = (s / 4) * Math.PI * 2 + 0.4;
+        const sLen = gR * 0.08;
+        const spikeGrad = o.createLinearGradient(0, 0, Math.cos(sa) * sLen, Math.sin(sa) * sLen);
+        spikeGrad.addColorStop(0, 'rgba(255, 255, 255, 0.6)');
+        spikeGrad.addColorStop(0.1, 'rgba(200, 220, 255, 0.2)');
+        spikeGrad.addColorStop(1, 'rgba(0,0,0,0)');
+        o.fillStyle = spikeGrad;
+        o.beginPath();
+        o.moveTo(Math.cos(sa - 0.08) * gR * 0.005, Math.sin(sa - 0.08) * gR * 0.005);
+        o.lineTo(Math.cos(sa) * sLen, Math.sin(sa) * sLen);
+        o.lineTo(Math.cos(sa + 0.08) * gR * 0.005, Math.sin(sa + 0.08) * gR * 0.005);
+        o.fill();
+      }
+      o.restore();
+
+      // --- 7. Star clusters (Trumpler 14/16 analogs) ---
+      const starClusters = [
+        { x: 0.05, y: -0.08, count: 80, r: 0.08, core: 'warm' },   // near Eta Carinae
+        { x: -0.15, y: -0.18, count: 50, r: 0.06, core: 'blue' },   // upper left cluster
+        { x: 0.20, y: 0.05, count: 40, r: 0.05, core: 'mixed' },    // right cluster
+        { x: -0.08, y: 0.15, count: 35, r: 0.05, core: 'warm' },    // lower cluster
+      ];
+      for (const sc of starClusters) {
+        for (let i = 0; i < sc.count; i++) {
+          const sAngle = Math.random() * Math.PI * 2;
+          const sDist = Math.random() * sc.r * gR;
+          const sx = cx + sc.x * gR + Math.cos(sAngle) * sDist;
+          const sy = cy + sc.y * gR + Math.sin(sAngle) * sDist;
+          const isBright = Math.random() > 0.7;
+          const alpha = isBright ? 0.06 + Math.random() * 0.06 : 0.02 + Math.random() * 0.04;
+
+          const color = sc.core === 'blue'
+            ? 'rgba(180, 210, 255, 0.9)'
+            : sc.core === 'warm'
+              ? 'rgba(255, 235, 200, 0.85)'
+              : (Math.random() > 0.5 ? 'rgba(255, 235, 200, 0.85)' : 'rgba(180, 210, 255, 0.9)');
+
+          o.globalAlpha = alpha;
+          const sgGrad = o.createRadialGradient(sx, sy, 0, sx, sy, isBright ? 2 : 1.2);
+          sgGrad.addColorStop(0, color);
+          sgGrad.addColorStop(1, 'rgba(0,0,0,0)');
+          o.fillStyle = sgGrad;
+          o.beginPath(); o.arc(sx, sy, isBright ? 2 : 1.2, 0, Math.PI * 2); o.fill();
+        }
       }
       o.globalAlpha = 1;
 
       galaxyTexRef.current = off;
     };
-    buildGalaxyTexture();
+    buildNebulaTexture();
 
     const handleMouse = (e: MouseEvent) => {
       mouseRef.current = { x: e.clientX / w, y: e.clientY / h };
@@ -265,23 +298,24 @@ export function Starfield() {
       ctx.clearRect(0, 0, w, h);
 
       // ═══════════════════════════════════════════
-      // GALAXY — pre-rendered offscreen texture, rotated per frame
+      // CARINA NEBULA — pre-rendered texture, gentle sway
       // ═══════════════════════════════════════════
       {
         const tex = galaxyTexRef.current;
         const { gx, gy, gR } = galaxyDims.current;
         if (tex && gR > 0) {
-          const rotation = time * 0.00004;
           const texSize = tex.width;
-          const breathe = 1 + 0.04 * Math.sin(time * 0.00015);
+          const breathe = 1 + 0.05 * Math.sin(time * 0.00015);
+          // Very subtle sway (not rotation — nebulae don't rotate)
+          const swayX = Math.sin(time * 0.00008) * gR * 0.015;
+          const swayY = Math.cos(time * 0.0001) * gR * 0.01;
 
           ctx.save();
-          ctx.globalAlpha = breathe * 0.92;
-          ctx.translate(gx, gy);
-          ctx.rotate(rotation);
+          ctx.globalAlpha = breathe * 0.9;
           ctx.drawImage(
             tex,
-            -texSize / 2, -texSize / 2,
+            gx - texSize / 2 + swayX,
+            gy - texSize / 2 + swayY,
             texSize, texSize
           );
           ctx.restore();
