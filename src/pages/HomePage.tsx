@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { ProgressBar } from '../components/progress/ProgressBar';
 import { useProgress } from '../hooks/useProgress';
 import { chapterIndex, loadChapter } from '../data/loadChapter';
+import { cleanTitle } from '../utils/titleClean';
 import type { Chapter } from '../types';
 
 type ScrollTriggerInstance = {
@@ -48,10 +49,6 @@ function getLastChapter(): { id: number; title: string } | null {
     return null;
   }
   return null;
-}
-
-function cleanTitle(title: string) {
-  return title.replace(/^[一二三四五六七八九十\d]+[、.\s-]*/, '');
 }
 
 function phaseForChapter(chapterId: number) {
@@ -181,17 +178,7 @@ export function HomePage({ completed, total, inProgress }: { completed: number; 
 
       {/* Guide introduction — console-style info panel */}
       <section className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16">
-        <div className="relative p-6 sm:p-8 rounded-lg border overflow-hidden"
-          style={{
-            background: 'linear-gradient(180deg, rgba(10,10,22,0.8), rgba(6,6,14,0.7))',
-            borderColor: 'var(--border-color)',
-            boxShadow: '0 4px 24px rgba(0,0,0,0.3), 0 0 0 1px rgba(124,92,240,0.04), inset 0 1px 0 rgba(255,255,255,0.01)',
-          }}
-        >
-          {/* Top accent line — console-style */}
-          <div className="absolute top-0 left-6 right-6 h-px"
-            style={{ background: 'linear-gradient(90deg, transparent, rgba(124,92,240,0.3) 30%, rgba(124,92,240,0.5) 50%, rgba(124,92,240,0.3) 70%, transparent)' }}
-          />
+        <div className="console-panel p-6 sm:p-8">
           <h2 className="text-lg font-bold mb-4 tracking-tight" style={{ fontFamily: 'var(--font-heading)', color: 'var(--text-primary)' }}>
             攻略说明
           </h2>

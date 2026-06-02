@@ -1,11 +1,10 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { chapterIndex, loadChapter } from '../data/loadChapter';
+import { cleanTitle } from '../utils/titleClean';
 import { extractStudyTrees } from '../data/extractTools';
 import type { Chapter } from '../types';
 import type { StudyTreeHit } from '../data/extractTools';
-
-function cleanTitle(t: string) { return t.replace(/^第.+?\s*/, ''); }
 
 function phaseColor(id: number) {
   if (id <= 3) return '#4ade80';

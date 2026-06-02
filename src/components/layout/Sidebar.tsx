@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useProgress } from '../../hooks/useProgress';
 import { loadChapter } from '../../data/loadChapter';
+import { cleanTitle } from '../../utils/titleClean';
 import { extractStudyTrees, extractAchievements } from '../../data/extractTools';
 
 interface SidebarProps {}
@@ -79,10 +80,6 @@ function parseSectionTitle(title: string) {
   const match = title.trim().match(/^(\d+\.\d+)\s*(.*)$/);
   if (!match) return { label: title.trim() };
   return { marker: match[1], label: match[2].trim() };
-}
-
-function cleanTitle(title: string) {
-  return title.replace(/^[一二三四五六七八九十\d]+[、.\s-]*/, '');
 }
 
 export function Sidebar({}: SidebarProps) {
