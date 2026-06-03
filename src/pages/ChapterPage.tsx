@@ -91,6 +91,7 @@ export function ChapterPage({ onStatusChange, getStatus, fontSize, onFontSizeCha
         onFontSizeChange={onFontSizeChange}
         totalChapters={chapterIndex.length}
         searchQuery={searchQuery}
+        achievementHighlight={achievementQuery}
       />
     </div>
   );

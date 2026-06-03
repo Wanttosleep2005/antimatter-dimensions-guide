@@ -1,4 +1,17 @@
-import { getRune, decodeBraille, RUNE_COLORS } from '../data/runes';
+import { getRune, decodeBraille, RUNE_COLORS, RUNES } from '../data/runes';
+
+/** Infer rune letter from braille dot pattern by finding which rune has matching effects */
+function inferRuneFromBraille(braille: string): string {
+  if (!braille) return '';
+  const effects = decodeBraille(braille);
+  if (effects.length === 0) return '';
+  // Try to match effects to a specific rune
+  for (const r of RUNES) {
+    const runeEffectIds = Object.keys(r.effects).map(Number);
+    if (effects.every((id) => runeEffectIds.includes(id))) return r.letter;
+  }
+  return '';
+}
 
 // Inline abbreviation definitions with colors
 const currencyDefs: Record<string, { label: string; color: string }> = {
@@ -96,7 +109,8 @@ const RUNE_COMBO_EXCLUDES = new Set([
 ]);
 
 // Rune spec: letter + braille + level — R⠴(134), D⠆(12)
-const RUNE_SPEC_RE_HTML = /([PITRDEY])([⠁-⣿]+)?\((\d+)\)/g;
+// Also matches standalone braille specs like ⠔(13) without letter prefix
+const RUNE_SPEC_RE_HTML = /([PITRDEY])?([⠁-⣿]+)\((\d+)\)/g;
 
 // Scientific notation
 const SCI_RE = /(\d+(?:\.\d+)?e\d+)/g;
@@ -250,19 +264,26 @@ export function highlightTerms(text: string, searchQuery?: string, achievementHi
     return `<span class="currency-inline" style="color:${def.color};border-color:${def.color}" data-tip="${escapeAttr(def.label)}">${abbr}</span>`;
   });
 
-  // Step 3: Rune specs (R⠴(134), D⠆(12)) → full tooltip spans
+  // Step 3: Rune specs (R⠴(134), D⠆(12), standalone ⠔(13)) → full tooltip spans
   s = s.replace(RUNE_SPEC_RE_HTML, (match, letter, braille, levelStr) => {
     if (match.includes('<')) return match;
     const brailleStr = braille || '';
     const level = parseInt(levelStr);
-    const color = RUNE_COLORS[letter] || '#a855f7';
-    const rune = getRune(letter);
-    const label = rune ? `${rune.name}符文` : letter;
+
+    // If no letter prefix, infer from braille + context
+    let runeLetter = letter || '';
+    if (!runeLetter) {
+      runeLetter = inferRuneFromBraille(brailleStr);
+    }
+
+    const color = RUNE_COLORS[runeLetter] || '#a855f7';
+    const rune = getRune(runeLetter);
+    const label = rune ? `${rune.name}符文` : runeLetter;
     return `<span class="rune-spec group">
       <span class="rune-spec-label" style="border-color:${color};color:${color}" title="${escapeAttr(label)} Lv.${level}">
-        ${letter}${brailleStr}(${level})
+        ${runeLetter}${brailleStr}(${level})
       </span>
-      <span class="rune-tooltip">${buildRuneTooltip(letter, brailleStr, level)}</span>
+      <span class="rune-tooltip">${buildRuneTooltip(runeLetter, brailleStr, level)}</span>
     </span>`;
   });
 

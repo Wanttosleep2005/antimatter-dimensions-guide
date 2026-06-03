@@ -1616,6 +1616,28 @@ button[class*="card"]:hover {
 }
 
 /* ================================================================
+   18. ACHIEVEMENT HIGHLIGHT (purple — from AchievementsPage ?a=)
+   ================================================================ */
+mark.achievement-query-highlight {
+  background: #a855f7;
+  color: #fff;
+  font-weight: 600;
+  border-radius: 3px;
+  padding: 1px 3px;
+  box-shadow: 0 0 0 2px #a855f7;
+}
+mark.achievement-query-highlight-first {
+  background: #7c3aed;
+  color: #fff;
+  font-weight: 700;
+  border-radius: 3px;
+  padding: 1px 3px;
+  box-shadow: 0 0 0 3px #7c3aed, 0 0 12px #7c3aed99;
+  scroll-margin-top: 120px;
+  animation: search-pulse 1.5s ease-in-out 3;
+}
+
+/* ================================================================
    19. SEARCH HIGHLIGHT
    ================================================================ */
 mark.search-highlight {

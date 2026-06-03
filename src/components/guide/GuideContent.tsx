@@ -17,6 +17,7 @@ interface GuideContentProps {
   onFontSizeChange: (v: number) => void;
   totalChapters: number;
   searchQuery?: string;
+  achievementHighlight?: string;
 }
 
 type TocItem = {
@@ -39,7 +40,7 @@ function parseSectionTitle(title: string) {
   return { marker, label, display: `小节 ${marker} · ${label}` };
 }
 
-export function GuideContent({ chapter, chapterId, status, onStatusChange, fontSize, onFontSizeChange, totalChapters, searchQuery }: GuideContentProps) {
+export function GuideContent({ chapter, chapterId, status, onStatusChange, fontSize, onFontSizeChange, totalChapters, searchQuery, achievementHighlight }: GuideContentProps) {
   const location = useLocation();
   useScrollFade({ fadeDistance: 320, minScale: 0.82 });
   const prevChapter = chapterId > 1 ? chapterId - 1 : null;
@@ -117,12 +118,13 @@ export function GuideContent({ chapter, chapterId, status, onStatusChange, fontS
   });
 
   useEffect(() => {
-    if (!searchQuery) return;
+    if (!searchQuery && !achievementHighlight) return;
+    const selector = achievementHighlight ? 'mark.achievement-query-highlight-first' : 'mark.search-highlight-first';
     const timeout = window.setTimeout(() => {
-      document.querySelector('mark.search-highlight-first')?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      document.querySelector(selector)?.scrollIntoView({ block: 'center', behavior: 'smooth' });
     }, 120);
     return () => window.clearTimeout(timeout);
-  }, [searchQuery, chapterId]);
+  }, [searchQuery, achievementHighlight, chapterId]);
 
   useEffect(() => {
     if (!location.hash || searchQuery) return;
@@ -287,7 +289,7 @@ export function GuideContent({ chapter, chapterId, status, onStatusChange, fontS
                 {section.title && (
                   <h2 id={sectionId} className="guide-section-heading">
                     {sectionTitle.marker && <span className="guide-section-marker">小节 {sectionTitle.marker}</span>}
-                    <span className="guide-section-title-text" dangerouslySetInnerHTML={{ __html: injectGlossaryTooltips(highlightTerms(sectionTitle.label, searchQuery)) }} />
+                    <span className="guide-section-title-text" dangerouslySetInnerHTML={{ __html: injectGlossaryTooltips(highlightTerms(sectionTitle.label, searchQuery, achievementHighlight)) }} />
                     <button
                       type="button"
                       className={`guide-section-bookmark ${isBookmarked(sectionId) ? 'is-active' : ''}`}
@@ -315,12 +317,12 @@ export function GuideContent({ chapter, chapterId, status, onStatusChange, fontS
                 {section.content.map((text, j) => {
                   if (isPageMarker(text)) return null;
                   if (text.startsWith('## ')) {
-                    return <h3 key={j} id={`${sectionId}-sub-${j}`} dangerouslySetInnerHTML={{ __html: injectGlossaryTooltips(highlightTerms(text.slice(3), searchQuery)) }} />;
+                    return <h3 key={j} id={`${sectionId}-sub-${j}`} dangerouslySetInnerHTML={{ __html: injectGlossaryTooltips(highlightTerms(text.slice(3), searchQuery, achievementHighlight)) }} />;
+                }
+                if (text.startsWith('> ')) {
+                  return <blockquote key={j} className="highlight-box" dangerouslySetInnerHTML={{ __html: injectGlossaryTooltips(highlightTerms(text.slice(2), searchQuery, achievementHighlight)) }} />;
                   }
-                  if (text.startsWith('> ')) {
-                    return <blockquote key={j} className="highlight-box" dangerouslySetInnerHTML={{ __html: injectGlossaryTooltips(highlightTerms(text.slice(2), searchQuery)) }} />;
-                  }
-                  return <p key={j} dangerouslySetInnerHTML={{ __html: injectGlossaryTooltips(highlightTerms(text, searchQuery)) }} />;
+                  return <p key={j} dangerouslySetInnerHTML={{ __html: injectGlossaryTooltips(highlightTerms(text, searchQuery, achievementHighlight)) }} />;
                 })}
               </section>
             );
