@@ -131,6 +131,11 @@ export function SearchModal({ isOpen, onClose }: SearchModalProps) {
       setResults([]);
       setActiveIndex(-1);
       setTimeout(() => inputRef.current?.focus(), 50);
+    } else {
+      // Cleanup on close — free 20 chapters of JSON from memory
+      allContent.current = [];
+      setLoaded(false);
+      setResults([]);
     }
   }, [isOpen]);
 

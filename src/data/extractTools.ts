@@ -1,5 +1,7 @@
 import type { Chapter } from '../types';
 
+export type StudyTreeType = 'initial' | 'reset' | 'purchase' | 'standard' | 'standardLike' | 'ec';
+
 export interface StudyTreeHit {
   id: string;
   chapterId: number;
@@ -7,6 +9,9 @@ export interface StudyTreeHit {
   label: string;
   tree: string;
   context: string;
+  treeType: StudyTreeType;
+  ttCount?: number;
+  ecRef?: string;
 }
 
 export interface AchievementHit {
@@ -17,10 +22,13 @@ export interface AchievementHit {
   context: string;
 }
 
-const STUDY_TREE_RE = /(?:\d{2,3}\s*,\s*){5,}\d{2,3}\s*(?:\|\s*\d{1,2})?/g;
+const STUDY_TREE_RE = /(?:\d{2,3}\s*,\s*){2,}\d{2,3}\s*(?:\|\s*\d{1,2})?/g;
 
-// Context keywords that indicate a real study tree (not purchase orders)
-const TREE_KEYWORDS_RE = /研究树|TT|TS|EC\d+|时间研究|标准树|挂机|活跃/;
+// Context keywords
+const TREE_KEYWORDS_RE = /研究树|TT|TS|EC\d+|时间研究|标准树|挂机|活跃|购买TS|购买研究|重置/;
+const RESET_KEYWORDS_RE = /重置了时间研究之后|重置研究树至|重置到|重置为/;
+const PURCHASE_KEYWORDS_RE = /购买TS|购买研究.*\d+TT/;
+const STANDARD_KEYWORDS_RE = /标准树|活跃路径|挂机路径/;
 const ACHIEVEMENT_CHAIN_RE = /r(\d{2})((?:\/\d{2})+)/g;
 const ACHIEVEMENT_RE = /\br\d{2,3}\b/g;
 
@@ -38,11 +46,29 @@ function compactTree(tree: string) {
   return tree.replace(/\s+/g, '').replace(/，/g, ',');
 }
 
+function classifyTree(context: string): { type: StudyTreeType; label: string } {
+  if (context.includes('标准树')) {
+    return /31.*除外|除外.*31/.test(context)
+      ? { type: 'standardLike', label: '类标准树' }
+      : { type: 'standard', label: '标准树' };
+  }
+  if (context.includes('EC') && /EC\d+×\d+/.test(context)) {
+    return { type: 'ec', label: 'EC挑战树' };
+  }
+  if (RESET_KEYWORDS_RE.test(context)) {
+    return { type: 'reset', label: '重置后' };
+  }
+  if (PURCHASE_KEYWORDS_RE.test(context)) {
+    return { type: 'purchase', label: '购买后' };
+  }
+  return { type: 'initial', label: '初始树' };
+}
+
 function inferTreeLabel(context: string, chapterId: number) {
   const ec = context.match(/EC\d+(?:×\d+)?/i)?.[0];
   const tt = context.match(/\d{2,5}\s*TT/i)?.[0]?.replace(/\s+/g, '');
-  const named = context.includes('标准树') ? '标准树' : context.includes('挂机路径') ? '挂机路径' : context.includes('活跃路径') ? '活跃路径' : '';
-  return [ec, tt, named].filter(Boolean).join(' · ') || `第 ${chapterId} 章研究树`;
+  const cls = classifyTree(context);
+  return [cls.label, ec, tt].filter(Boolean).join(' · ') || `第 ${chapterId} 章研究树`;
 }
 
 export function extractStudyTrees(chapters: Chapter[]) {
@@ -53,7 +79,7 @@ export function extractStudyTrees(chapters: Chapter[]) {
     for (const match of chapter.content.matchAll(STUDY_TREE_RE)) {
       const raw = match[0];
       const tree = compactTree(raw);
-      if (tree.split(',').length < 6) continue;
+      if (tree.split(',').length < 3) continue;
 
       const key = `${chapter.id}:${tree}`;
       if (seen.has(key)) continue;
@@ -64,6 +90,10 @@ export function extractStudyTrees(chapters: Chapter[]) {
 
       // Skip matches that look like purchase orders, not study trees
       if (!TREE_KEYWORDS_RE.test(context)) continue;
+
+      const cls = classifyTree(context);
+      const ttMatch = context.match(/(\d+)\s*TT/i);
+
       hits.push({
         id: key,
         chapterId: chapter.id,
@@ -71,6 +101,9 @@ export function extractStudyTrees(chapters: Chapter[]) {
         label: inferTreeLabel(context, chapter.id),
         tree,
         context,
+        treeType: cls.type,
+        ttCount: ttMatch ? parseInt(ttMatch[1]) : undefined,
+        ecRef: context.match(/EC\d+(?:×\d+)?/i)?.[0],
       });
     }
   });

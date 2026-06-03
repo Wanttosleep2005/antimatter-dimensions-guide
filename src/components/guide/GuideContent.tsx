@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef, useCallback } from 'react';
+import { useEffect, useState, useRef, useCallback, useMemo, memo } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import type { Chapter } from '../../types';
 import { ReadingProgress } from '../progress/ReadingProgress';
@@ -6,7 +6,6 @@ import { PurchasePanel } from './PurchasePanel';
 import { highlightTerms } from '../../utils/highlightTerms';
 import { injectGlossaryTooltips } from '../../utils/glossaryTooltips';
 import { toggleBookmark, isBookmarked } from '../../utils/bookmarks';
-import { useScrollFade } from '../../hooks/useScrollFade';
 
 interface GuideContentProps {
   chapter: Chapter;
@@ -42,7 +41,6 @@ function parseSectionTitle(title: string) {
 
 export function GuideContent({ chapter, chapterId, status, onStatusChange, fontSize, onFontSizeChange, totalChapters, searchQuery, achievementHighlight }: GuideContentProps) {
   const location = useLocation();
-  useScrollFade({ fadeDistance: 320, minScale: 0.82 });
   const prevChapter = chapterId > 1 ? chapterId - 1 : null;
   const nextChapter = chapterId < totalChapters ? chapterId + 1 : null;
 
@@ -404,3 +402,5 @@ export function GuideContent({ chapter, chapterId, status, onStatusChange, fontS
     </>
   );
 }
+
+export const MemoGuideContent = memo(GuideContent);

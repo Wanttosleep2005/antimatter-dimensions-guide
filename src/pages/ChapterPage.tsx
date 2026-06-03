@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link, useSearchParams } from 'react-router-dom';
 import { chapterIndex, loadChapter } from '../data/loadChapter';
-import { GuideContent } from '../components/guide/GuideContent';
+import { MemoGuideContent } from '../components/guide/GuideContent';
 import type { Chapter } from '../types';
 
 interface ChapterPageProps {
@@ -82,7 +82,7 @@ export function ChapterPage({ onStatusChange, getStatus, fontSize, onFontSizeCha
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16 animate-fade-in-up" style={{ '--chapter-phase-color': phaseColor } as React.CSSProperties}>
-      <GuideContent
+      <MemoGuideContent
         chapter={chapter}
         chapterId={chapterId}
         status={status}

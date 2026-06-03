@@ -8,6 +8,7 @@ import { ChapterPage } from './pages/ChapterPage';
 import { GlossaryPage } from './pages/GlossaryPage';
 import { useProgress } from './hooks/useProgress';
 import { usePerformanceMonitor } from './hooks/usePerformanceMonitor';
+import { useMemoryGuard } from './hooks/useMemoryGuard';
 import { chapterIndex } from './data/loadChapter';
 
 // Lazy-load heavy pages — code splitting for performance
@@ -51,11 +52,19 @@ function AppRoutes() {
   });
   const { setChapterStatus, getStatus, getCompletionStats } = useProgress();
   const perfMode = usePerformanceMonitor();
+  useMemoryGuard();
   const navigate = useNavigate();
   const location = useLocation();
 
   // Cache cleanup on app mount
   useEffect(() => { cleanCache(); }, []);
+
+  // Memory pressure listener
+  useEffect(() => {
+    const h = () => cleanCache();
+    window.addEventListener('ad-memory-pressure', h);
+    return () => window.removeEventListener('ad-memory-pressure', h);
+  }, []);
 
   // Keyboard navigation
   useEffect(() => {

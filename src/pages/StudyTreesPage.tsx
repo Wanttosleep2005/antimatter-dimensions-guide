@@ -142,6 +142,34 @@ export function StudyTreesPage() {
                   </div>
                   <h3 className="text-sm font-bold text-[var(--text-primary)] mb-3" style={{ fontFamily: 'var(--font-heading)' }}>
                     <span style={{ color: 'var(--accent-color)' }}>{hit.label}</span>
+                    {' '}
+                    <span className="text-[10px] px-1.5 py-0.5 rounded font-semibold" style={{
+                      background: hit.treeType === 'standard' ? '#22c55e20' :
+                                  hit.treeType === 'reset' ? '#3b82f620' :
+                                  hit.treeType === 'purchase' ? '#f59e0b20' :
+                                  hit.treeType === 'ec' ? '#ef444420' :
+                                  hit.treeType === 'standardLike' ? '#8b5cf620' :
+                                  '#6366f120',
+                      color: hit.treeType === 'standard' ? '#22c55e' :
+                             hit.treeType === 'reset' ? '#3b82f6' :
+                             hit.treeType === 'purchase' ? '#f59e0b' :
+                             hit.treeType === 'ec' ? '#ef4444' :
+                             hit.treeType === 'standardLike' ? '#8b5cf6' :
+                             '#6366f1',
+                      border: '1px solid currentColor',
+                    }}>
+                      {hit.treeType === 'standard' ? '标准树' :
+                       hit.treeType === 'reset' ? '重置后' :
+                       hit.treeType === 'purchase' ? '购买后' :
+                       hit.treeType === 'ec' ? 'EC挑战' :
+                       hit.treeType === 'standardLike' ? '类标准' :
+                       '初始树'}
+                    </span>
+                    {hit.ttCount != null && (
+                      <span className="text-[10px] text-[var(--text-tertiary)] ml-1" style={{ fontFamily: 'var(--font-mono)' }}>
+                        {hit.ttCount}TT
+                      </span>
+                    )}
                   </h3>
                   <code className="block p-3 rounded-lg bg-[var(--bg-primary)] border border-[var(--border-color)] text-xs text-[var(--text-secondary)] font-mono leading-relaxed break-all mb-3">
                     {hit.tree}
