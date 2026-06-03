@@ -51,7 +51,9 @@ export function StudyTreesPage() {
   }, [query, studyTrees]);
 
   const copyTree = async (hit: StudyTreeHit) => {
-    await navigator.clipboard.writeText(hit.tree);
+    let tree = hit.tree;
+    if (!/|\d$/.test(tree)) tree += '|0';
+    await navigator.clipboard.writeText(tree);
     setCopiedId(hit.id);
     setTimeout(() => setCopiedId(null), 1500);
   };

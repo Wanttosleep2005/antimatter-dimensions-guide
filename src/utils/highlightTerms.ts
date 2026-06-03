@@ -15,20 +15,20 @@ function inferRuneFromBraille(braille: string): string {
 
 // Inline abbreviation definitions with colors
 const currencyDefs: Record<string, { label: string; color: string }> = {
-  AM:  { label: '反物质 (Antimatter) — 游戏最基础货币，通过维度产生', color: '#8b5cf6' },
-  IP:  { label: '无限点数 (Infinity Points) — 到达1e308AM后大坍缩获得', color: '#06b6d4' },
-  EP:  { label: '永恒点数 (Eternity Points) — 完成永恒后获得', color: '#f59e0b' },
-  TT:  { label: '时间定理 (Time Theorems) — 解锁时间研究树的资源', color: '#a78bfa' },
-  DT:  { label: '膨胀时间 (Dilated Time) — 时间膨胀机制中的特殊资源', color: '#22d3ee' },
-  RM:  { label: '现实机器 (Reality Machines) — 完成现实后获得', color: '#f472b6' },
-  IM:  { label: '虚数机器 (Imaginary Machines) — Cel5+ 阶段专用资源', color: '#c084fc' },
-  RS:  { label: '现实碎片 (Reality Shards) — 天界层阶段的特殊资源', color: '#e879f9' },
-  TP:  { label: '超光速粒子 (Tachyon Particles) — 时间膨胀阶段资源', color: '#38bdf8' },
-  TC:  { label: '时间研究 (Time Studies) — 研究树中的各项研究', color: '#818cf8' },
-  AP:  { label: '自动机点数 (Automator Points) — 用于解锁自动机相关功能', color: '#a78bfa' },
-  RU:  { label: '现实升级 (Reality Upgrades) — 使用现实机器购买的永久升级', color: '#fb923c' },
-  PP:  { label: '复兴点 (Perk Points) — 用于购买复兴树节点', color: '#fbbf24' },
-  AD:  { label: '反物质维度乘数 (AD) — 符文P的词条效果', color: '#ef4444' },
+  AM:  { label: '反物质 (Antimatter)', color: '#8b5cf6' },
+  IP:  { label: '无限点数 (Infinity Points)', color: '#06b6d4' },
+  EP:  { label: '永恒点数 (Eternity Points)', color: '#f59e0b' },
+  TT:  { label: '时间定理 (Time Theorems)', color: '#a78bfa' },
+  DT:  { label: '膨胀时间 (Dilated Time)', color: '#22d3ee' },
+  RM:  { label: '现实机器 (Reality Machines)', color: '#f472b6' },
+  IM:  { label: '虚数机器 (Imaginary Machines)', color: '#c084fc' },
+  RS:  { label: '现实碎片 (Reality Shards)', color: '#e879f9' },
+  TP:  { label: '超光速粒子 (Tachyon Particles)', color: '#38bdf8' },
+  TC:  { label: '时间研究 (Time Studies)', color: '#818cf8' },
+  AP:  { label: '自动机点数 (Automator Points)', color: '#a78bfa' },
+  RU:  { label: '现实升级 (Reality Upgrades)', color: '#fb923c' },
+  PP:  { label: '复兴点 (Perk Points)', color: '#fbbf24' },
+  AD:  { label: '反物质维度乘数 (AD)', color: '#ef4444' },
 };
 
 // Guild tree node definitions with category colors
@@ -231,6 +231,11 @@ export function highlightTerms(text: string, searchQuery?: string, achievementHi
     return 'r' + base + ' ' + parts.map((p: string) => 'r' + p).join(' ');
   });
 
+  // Step 0.1: Normalize game term casing (ru52 → RU52, du1 → DU1, etc.)
+  s = s.replace(/\b(ru|du|iu|pu|ts|ec|ic|td|id|cel)(\d+)\b/gi,
+    (_, prefix, num) => prefix.toUpperCase() + num
+  );
+
   // Step 0.5: Achievement highlight (before search highlight, separate color)
   if (achievementHighlight && achievementHighlight.trim()) {
     const escaped = escapeRegex(achievementHighlight.trim());
@@ -314,6 +319,11 @@ export function highlightTerms(text: string, searchQuery?: string, achievementHi
     if (/^r\d{2,3}$/.test(match)) {
       const achNum = match.slice(1);
       return `<span class="game-term" data-tip="成就 r${achNum} — Achievement">${match}</span>`;
+    }
+    // DU1/DU2: default to 膨胀升级 (dilation upgrade), not reality tree node
+    if (/^DU[12]$/.test(match)) {
+      const gameTip = getGameTermTip(match);
+      return `<span class="game-term" data-tip="${escapeAttr(gameTip || `膨胀升级 ${match}`)}">${match}</span>`;
     }
     const guildDef = guildTermDefs[match];
     if (guildDef) {

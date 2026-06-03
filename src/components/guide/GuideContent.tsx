@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef, useCallback, useMemo, memo } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import type { Chapter } from '../../types';
 import { ReadingProgress } from '../progress/ReadingProgress';
 import { PurchasePanel } from './PurchasePanel';
@@ -41,8 +41,36 @@ function parseSectionTitle(title: string) {
 
 export function GuideContent({ chapter, chapterId, status, onStatusChange, fontSize, onFontSizeChange, totalChapters, searchQuery, achievementHighlight }: GuideContentProps) {
   const location = useLocation();
+  const navigate = useNavigate();
   const prevChapter = chapterId > 1 ? chapterId - 1 : null;
   const nextChapter = chapterId < totalChapters ? chapterId + 1 : null;
+
+  // ── Search context bar state ──
+  const [searchMatchCount, setSearchMatchCount] = useState(0);
+  const [currentMatchIdx, setCurrentMatchIdx] = useState(0);
+
+  // ── TOC active section tracking ──
+  const [activeSectionId, setActiveSectionId] = useState<string | null>(null);
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) {
+            setActiveSectionId(entry.target.id);
+            break;
+          }
+        }
+      },
+      { rootMargin: '-80px 0px -60% 0px', threshold: 0 },
+    );
+    const timeout = setTimeout(() => {
+      document.querySelectorAll('.guide-section').forEach(el => observer.observe(el));
+    }, 300);
+    return () => {
+      clearTimeout(timeout);
+      observer.disconnect();
+    };
+  }, [chapterId]);
 
   // ── Scroll position persistence ──
   const SCROLL_KEY = `ad-scroll-pos-${chapterId}`;
@@ -124,6 +152,31 @@ export function GuideContent({ chapter, chapterId, status, onStatusChange, fontS
     return () => window.clearTimeout(timeout);
   }, [searchQuery, achievementHighlight, chapterId]);
 
+  // Count search highlights after render
+  useEffect(() => {
+    if (!searchQuery) { setSearchMatchCount(0); setCurrentMatchIdx(0); return; }
+    const timeout = window.setTimeout(() => {
+      const count = document.querySelectorAll('mark.search-highlight').length;
+      setSearchMatchCount(count);
+      setCurrentMatchIdx(count > 0 ? 1 : 0);
+    }, 200);
+    return () => window.clearTimeout(timeout);
+  }, [searchQuery, chapterId]);
+
+  const scrollToHighlight = useCallback((direction: 'prev' | 'next') => {
+    const marks = document.querySelectorAll('mark.search-highlight');
+    if (marks.length === 0) return;
+    const newIdx = direction === 'next'
+      ? (currentMatchIdx >= marks.length ? 1 : currentMatchIdx + 1)
+      : (currentMatchIdx <= 1 ? marks.length : currentMatchIdx - 1);
+    setCurrentMatchIdx(newIdx);
+    marks[newIdx - 1]?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+  }, [currentMatchIdx]);
+
+  const clearSearch = useCallback(() => {
+    navigate(`/chapter/${chapterId}`);
+  }, [navigate, chapterId]);
+
   useEffect(() => {
     if (!location.hash || searchQuery) return;
     const id = decodeURIComponent(location.hash.slice(1));
@@ -136,6 +189,27 @@ export function GuideContent({ chapter, chapterId, status, onStatusChange, fontS
   return (
     <>
       <ReadingProgress />
+
+      {/* Search context bar */}
+      {searchQuery && searchMatchCount > 0 && (
+        <div className="search-context-bar">
+          <span className="search-context-info">
+            搜索："{searchQuery}" — 第 {chapterId} 章，共匹配 {searchMatchCount} 处
+          </span>
+          <div className="search-context-actions">
+            <button type="button" onClick={() => scrollToHighlight('prev')} title="上一处">
+              ↑上一处
+            </button>
+            <span className="search-context-idx">{currentMatchIdx}/{searchMatchCount}</span>
+            <button type="button" onClick={() => scrollToHighlight('next')} title="下一处">
+              ↓下一处
+            </button>
+            <button type="button" onClick={clearSearch} className="search-context-clear" title="清除搜索">
+              清除
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Chapter header */}
       <div className="chapter-header text-center mb-12">
@@ -258,7 +332,7 @@ export function GuideContent({ chapter, chapterId, status, onStatusChange, fontS
             <a
               key={item.id}
               href={`#${item.id}`}
-              className={`chapter-toc-pill ${item.level === 3 ? 'chapter-toc-pill-sub' : ''}`}
+              className={`chapter-toc-pill ${item.level === 3 ? 'chapter-toc-pill-sub' : ''} ${activeSectionId === item.id ? 'is-active' : ''}`}
               style={{ animationDelay: `${index * 60}ms` }}
             >
               {item.marker ? (

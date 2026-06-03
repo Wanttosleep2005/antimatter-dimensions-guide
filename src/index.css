@@ -2006,7 +2006,9 @@ body::before {
   font-family: var(--font-heading);
   padding: 6px 10px;
   border-radius: 6px;
-  white-space: nowrap;
+  white-space: normal;
+  max-width: 320px;
+  word-break: break-word;
   z-index: 999;
   pointer-events: none;
   border: 1px solid var(--border-strong);
@@ -2039,7 +2041,9 @@ body::before {
   font-family: var(--font-heading);
   padding: 6px 12px;
   border-radius: 10px;
-  white-space: nowrap;
+  white-space: normal;
+  max-width: 320px;
+  word-break: break-word;
   z-index: 999;
   pointer-events: none;
   opacity: 0;
@@ -2418,6 +2422,14 @@ p .rune-spec {
   --phase-tint: var(--chapter-phase-color, var(--accent-color));
 }
 
+.chapter-toc-pill.is-active {
+  background: var(--accent-light);
+  border-color: var(--border-accent);
+  color: var(--accent-color);
+  font-weight: 600;
+  box-shadow: 0 0 8px var(--accent-glow);
+}
+
 /* ================================================================
    31. GLOSSARY INLINE TOOLTIPS
    ================================================================ */
@@ -2447,7 +2459,7 @@ p .rune-spec {
   padding: 8px 12px;
   border-radius: 8px;
   white-space: normal;
-  max-width: 280px;
+  max-width: 320px;
   min-width: 160px;
   z-index: 999;
   pointer-events: none;
@@ -2457,7 +2469,7 @@ p .rune-spec {
   border: 1px solid var(--border-strong);
   box-shadow: var(--shadow-elevated);
   transition: opacity 0.15s ease, transform 0.15s ease;
-  word-break: break-all;
+  word-break: break-word;
 }
 .glossary-inline:hover::after {
   opacity: 1;
@@ -2499,6 +2511,83 @@ p .rune-spec {
 /* ================================================================
    25. PRINT STYLES
    ================================================================ */
+
+/* Callout warning — key step highlighting */
+.callout-warning {
+  background: rgba(251, 191, 36, 0.06);
+  border-left: 3px solid var(--warning);
+  padding-left: 12px;
+  border-radius: 0 6px 6px 0;
+}
+
+/* Alert classes — error/note callouts */
+
+/* Search context bar — sticky */
+.search-context-bar {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding: 0.6rem 1rem;
+  margin-bottom: 1.5rem;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  font-size: 0.8rem;
+  backdrop-filter: blur(12px);
+}
+.search-context-info {
+  color: var(--text-secondary);
+  font-family: var(--font-heading);
+}
+.search-context-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.search-context-actions button {
+  padding: 0.25rem 0.6rem;
+  border-radius: 6px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+  font-family: var(--font-heading);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.search-context-actions button:hover {
+  border-color: var(--border-accent);
+  color: var(--text-primary);
+  background: var(--accent-light);
+}
+.search-context-idx {
+  color: var(--text-tertiary);
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  min-width: 2.5rem;
+  text-align: center;
+}
+.search-context-clear {
+  color: var(--danger) !important;
+  border-color: var(--danger-bg) !important;
+}
+.search-context-clear:hover {
+  background: var(--danger-bg) !important;
+  border-color: var(--danger) !important;
+}
+
+/* Purchase panel number highlight */
+.purchase-num {
+  color: var(--accent2-color);
+  font-weight: 600;
+  font-family: var(--font-mono);
+}
+
 @media print {
   .guide-content {
     max-width: 100%;
