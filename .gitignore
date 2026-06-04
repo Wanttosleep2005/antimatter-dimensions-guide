@@ -6,3 +6,6 @@ dist/
 Thumbs.db
 *.log
 .workbuddy/
+.reasonix/
+.codebuddy/
+.netlify/state.json
