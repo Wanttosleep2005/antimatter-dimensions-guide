@@ -31,6 +31,32 @@ function isPageMarker(text: string) {
   return /^---\s*Page\s+\d+\s*---$/i.test(text.trim()) || /^Page\s+\d+$/i.test(text.trim());
 }
 
+function getParaClass(text: string): string {
+  if (/千万不要|后果很严重|注意不要/.test(text)) return 'alert-danger';
+  if (/注意|重要|关键|建议|必须/.test(text)) return 'alert-warn';
+  if (/提示|备注/.test(text)) return 'alert-info';
+  if (/已完成|解锁/.test(text)) return 'alert-success';
+  return '';
+}
+
+function wrapCollapsibleContent(html: string): string {
+  // Wrap tables with details/summary
+  html = html.replace(/(<table[\s\S]*?<\/table>)/g, (table) => {
+    const rowCount = (table.match(/<tr>/gi) || []).length;
+    return `<details class="collapsible-table"><summary>展开表格（${rowCount}行）</summary>${table}</details>`;
+  });
+
+  // Wrap long code blocks (>200 chars) with toggle
+  html = html.replace(/(<pre><code[^>]*>)([\s\S]*?)(<\/code><\/pre>)/g, (_m, open, code, close) => {
+    const text = code.replace(/<[^>]+>/g, '');
+    if (text.length <= 200) return _m;
+    const preview = text.slice(0, 200).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    return `<details class="collapsible-code"><summary>${preview}... <span class="collapsible-code-hint">(点击展开，${text.length}字符)</span></summary>${open}${code}${close}</details>`;
+  });
+
+  return html;
+}
+
 function parseSectionTitle(title: string) {
   const match = title.trim().match(/^(\d+\.\d+)\s*(.*)$/);
   if (!match) return { label: title.trim(), display: title.trim() };
@@ -389,12 +415,16 @@ export function GuideContent({ chapter, chapterId, status, onStatusChange, fontS
                 {section.content.map((text, j) => {
                   if (isPageMarker(text)) return null;
                   if (text.startsWith('## ')) {
-                    return <h3 key={j} id={`${sectionId}-sub-${j}`} dangerouslySetInnerHTML={{ __html: injectGlossaryTooltips(highlightTerms(text.slice(3), searchQuery, achievementHighlight)) }} />;
+                    const processed = wrapCollapsibleContent(injectGlossaryTooltips(highlightTerms(text.slice(3), searchQuery, achievementHighlight)));
+                    return <h3 key={j} id={`${sectionId}-sub-${j}`} dangerouslySetInnerHTML={{ __html: processed }} />;
                 }
                 if (text.startsWith('> ')) {
-                  return <blockquote key={j} className="highlight-box" dangerouslySetInnerHTML={{ __html: injectGlossaryTooltips(highlightTerms(text.slice(2), searchQuery, achievementHighlight)) }} />;
+                  const processed = wrapCollapsibleContent(injectGlossaryTooltips(highlightTerms(text.slice(2), searchQuery, achievementHighlight)));
+                  return <blockquote key={j} className="highlight-box" dangerouslySetInnerHTML={{ __html: processed }} />;
                   }
-                  return <p key={j} dangerouslySetInnerHTML={{ __html: injectGlossaryTooltips(highlightTerms(text, searchQuery, achievementHighlight)) }} />;
+                  const processed = wrapCollapsibleContent(injectGlossaryTooltips(highlightTerms(text, searchQuery, achievementHighlight)));
+                  const paraClass = getParaClass(text);
+                  return <p key={j} className={paraClass || undefined} dangerouslySetInnerHTML={{ __html: processed }} />;
                 })}
               </section>
             );

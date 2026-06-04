@@ -2006,9 +2006,7 @@ body::before {
   font-family: var(--font-heading);
   padding: 6px 10px;
   border-radius: 6px;
-  white-space: normal;
-  max-width: 320px;
-  word-break: break-word;
+  white-space: nowrap;
   z-index: 999;
   pointer-events: none;
   border: 1px solid var(--border-strong);
@@ -2041,9 +2039,7 @@ body::before {
   font-family: var(--font-heading);
   padding: 6px 12px;
   border-radius: 10px;
-  white-space: normal;
-  max-width: 320px;
-  word-break: break-word;
+  white-space: nowrap;
   z-index: 999;
   pointer-events: none;
   opacity: 0;
@@ -2521,6 +2517,10 @@ p .rune-spec {
 }
 
 /* Alert classes — error/note callouts */
+.alert-danger  { background: rgba(239,68,68,0.08);  border-left: 3px solid #ef4444; padding: 0.6rem 0.8rem 0.6rem 1rem; border-radius: 0 6px 6px 0; margin: 0.5rem 0; }
+.alert-warn    { background: rgba(251,191,36,0.08);  border-left: 3px solid #fbbf24; padding: 0.6rem 0.8rem 0.6rem 1rem; border-radius: 0 6px 6px 0; margin: 0.5rem 0; }
+.alert-info    { background: rgba(56,189,248,0.08);  border-left: 3px solid #38bdf8; padding: 0.6rem 0.8rem 0.6rem 1rem; border-radius: 0 6px 6px 0; margin: 0.5rem 0; }
+.alert-success { background: rgba(52,211,153,0.08);  border-left: 3px solid #34d399; padding: 0.6rem 0.8rem 0.6rem 1rem; border-radius: 0 6px 6px 0; margin: 0.5rem 0; }
 
 /* Search context bar — sticky */
 .search-context-bar {
@@ -2579,6 +2579,67 @@ p .rune-spec {
 .search-context-clear:hover {
   background: var(--danger-bg) !important;
   border-color: var(--danger) !important;
+}
+
+/* Collapsible tables & code blocks */
+.collapsible-table {
+  margin: 1rem 0;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.collapsible-table summary {
+  padding: 0.6rem 1rem;
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 600;
+  font-family: var(--font-heading);
+  color: var(--text-secondary);
+  background: var(--bg-tertiary);
+  user-select: none;
+  transition: background 0.15s;
+}
+.collapsible-table summary:hover {
+  background: var(--accent-light);
+  color: var(--text-primary);
+}
+.collapsible-table[open] summary {
+  border-bottom: 1px solid var(--border-color);
+}
+.collapsible-table table {
+  margin: 0;
+}
+
+.collapsible-code {
+  margin: 1rem 0;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.collapsible-code summary {
+  padding: 0.6rem 1rem;
+  cursor: pointer;
+  font-size: 0.75rem;
+  font-family: var(--font-mono);
+  color: var(--text-tertiary);
+  background: var(--bg-tertiary);
+  user-select: none;
+  transition: background 0.15s;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+.collapsible-code summary:hover {
+  background: var(--accent-light);
+  color: var(--text-secondary);
+}
+.collapsible-code-hint {
+  font-family: var(--font-heading);
+  color: var(--accent-color);
+  font-size: 0.7rem;
+}
+.collapsible-code pre {
+  margin: 0;
+  border-radius: 0;
 }
 
 /* Purchase panel number highlight */

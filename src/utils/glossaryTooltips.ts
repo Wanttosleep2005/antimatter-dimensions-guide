@@ -43,17 +43,29 @@ export function injectGlossaryTooltips(html: string): string {
 
 function wrapGlossaryText(text: string): string {
   for (const term of sortedTerms) {
+    // Protect existing HTML BEFORE matching this term — prevents
+    // subsequent terms from matching inside data-tip attributes of
+    // spans created by earlier iterations within the same text chunk.
+    const tags: string[] = [];
+    const protected_ = text.replace(/<[^>]+>/g, (tag) => {
+      tags.push(tag);
+      return `\x00${tags.length - 1}\x00`;
+    });
+
     const escaped = term.term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     const asciiTerm = /^[A-Za-z0-9-]+$/.test(term.term);
     const regex = new RegExp(
       asciiTerm ? `(?<![A-Za-z0-9])${escaped}(?![A-Za-z0-9])` : escaped,
       'g',
     );
-    text = text.replace(regex, () => {
+    const replaced = protected_.replace(regex, () => {
       const def = termMap.get(term.term);
       if (!def) return term.term;
       return `<span class="glossary-inline" data-tip="${escapeAttr(def.fullName)}｜${escapeAttr(def.description)}">${term.term}</span>`;
     });
+
+    // Restore previously protected HTML
+    text = replaced.replace(/\x00(\d+)\x00/g, (_, i) => tags[parseInt(i)]);
   }
   return text;
 }
